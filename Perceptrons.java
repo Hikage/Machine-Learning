@@ -9,13 +9,59 @@
  */
 package hw1Perceptrons;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.StringTokenizer;
+
 public class Perceptrons {
 
-	private final String inputFile = "letter-recognition.data";
-	private final double lrate = 0.2;
-	private final int bias = 1;
-	private int[] inputs = new int[17];
-	private double[] weights = new double[17];
+	private static final String inputFile = "src/hw1Perceptrons/letter-recognition.data";
+	private static final double lrate = 0.2;
+	private static final int bias = 1;
+	private static final int TRAIN = 0;
+	private static final int TEST = 1;
+	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
+	private static ArrayList<String[]> testData = new ArrayList<String[]>();
+	private static double[] weights = new double[17];
+	
+	//TODO: extract data
+	/*
+	 * Reads input file and generates training and test data sets
+	 */
+	public static void extractData(char testCase, char target){
+		testCase = Character.toUpperCase(testCase);
+		target = Character.toUpperCase(target);
+		
+		int dataSet = TRAIN;
+		
+		FileReader fr;
+		BufferedReader buff;
+		
+		try{
+			fr = new FileReader(inputFile);
+			buff = new BufferedReader(fr);
+			String line;
+			while((line = buff.readLine()) != null && line != ""){
+				if(Character.toUpperCase(line.charAt(0)) == testCase ||
+						Character.toUpperCase(line.charAt(0)) == target){
+					
+					String[] instance = line.split(",");
+					
+					//add to training or test
+					if(dataSet == TRAIN) trainData.add(instance);
+					else testData.add(instance);
+					dataSet = (dataSet + 1) % 2;
+				}
+			}
+		}
+		catch(IOException ex){
+			System.err.println("Oh no! An error occurred!\n Error: " + ex);
+			System.exit(0);
+		}
+	}
 	
 	//TODO: scale data values
 	/*
@@ -90,9 +136,73 @@ public class Perceptrons {
 	}
 	
 	public static void main(String args[]){
+		runUnitTests();
+		
 		//initializeWeights()
 		//extract all As and Bs from data
 		//for first half of extracted data, train
 		//test on second half
+	}
+	
+	
+	/**** Unit Tests ****/
+	public static boolean runUnitTests(){
+		testDataExtract(true);
+		return true;
+	}
+	
+	public static boolean testDataExtract(boolean printExamples){
+		System.out.println("Testing data extraction...");
+		
+		extractData('B', 'A');
+		
+		if(printExamples){
+			System.out.println("\nSample Training Data:");
+			for(int i = 0; i < 5; i++){
+				String[] instance = trainData.get(i);
+				for(String feature : instance) System.out.print(feature + ",");
+				System.out.println();
+			}
+			System.out.println("\nSample Test Data:");
+			for(int i = 0; i < 5; i++){
+				String[] instance = testData.get(i);
+				for(String feature : instance) System.out.print(feature + ",");
+				System.out.println();
+			}
+			System.out.println();
+		}
+		
+		for(int i = 0; i < 5; i++){
+			int rand = new Random().nextInt(trainData.size());
+			String[] instance = trainData.get(rand);
+			char type = instance[0].charAt(0);
+			if(type != 'A' && type != 'B'){
+				System.err.println("Invalid training instance extracted: " + type);
+				return false;
+			}
+			if(instance.length != 17){
+				System.err.println("Invalid number of training instance features: " + instance.length);
+				for(String feature : instance) System.out.print(feature);
+				System.out.println();
+				return false;
+			}
+			
+			rand = new Random().nextInt(testData.size());
+			instance = testData.get(rand);
+			type = instance[0].charAt(0);
+			if(type != 'A' && type != 'B'){
+				System.err.println("Invalid test instance extracted: " + type);
+				return false;
+			}
+			if(instance.length != 17){
+				System.err.println("Invalid number of training instance features: " + instance.length);
+				for(String feature : instance) System.out.print(feature);
+				System.out.println();
+				return false;
+			}
+		}
+		
+		System.out.println("Extracting data tests pass! :)");
+		return true;
 	}
 }
