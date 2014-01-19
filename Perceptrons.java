@@ -93,17 +93,25 @@ public class Perceptrons {
 			}
 		}
 		
-		if(testInstance != null){
-			for(int i = 1; i < testInstance.length; i++) testInstance[i] = Double.toString(Double.parseDouble(testInstance[i])/15);
-		}
+		if(testInstance != null)
+			for(int i = 1; i < testInstance.length; i++)
+				testInstance[i] = Double.toString(Double.parseDouble(testInstance[i])/15);
 	}
 	
 	//TODO: randomly generate initial +/- weights
 	/*
-	 * Initialize weights randomly
+	 * Initialize weights randomly, setting the first value to the bias
 	 */
-	public void initializeWeights(){
+	public static void initializeWeights(){
 		//for each of the 16 weights, generate a random double
+		weights[0] = bias;
+		
+		for(int i = 1; i < weights.length; i++){
+			boolean rand = new Random().nextBoolean();
+			int negOffset = 1;
+			if(rand) negOffset *= -1;
+			weights[i] = new Random().nextDouble() * negOffset;
+		}
 	}
 	
 	//TODO: process training example
@@ -176,6 +184,7 @@ public class Perceptrons {
 	public static boolean runUnitTests(){
 		testExtractData(false);
 		testScaleFeatures(false);
+		testInitializeWeights(false);
 		return true;
 	}
 	
@@ -290,6 +299,56 @@ public class Perceptrons {
 		}
 		
 		System.out.println("Feature scaling tests pass! :)");
+		return true;
+	}
+
+	public static boolean testInitializeWeights(boolean printWeights){
+		System.out.println("\nTesting weight initialization...");
+
+		initializeWeights();
+		
+		//Test for properly-set bias
+		if(weights[0] != bias){
+			System.err.println("First index of weights should be the bias (" + bias + "): " + weights[0]);
+			return false;
+		}
+		if(printWeights) System.out.print(weights[0]);
+		
+		boolean neg = false;
+		boolean pos = false;
+		
+		//Test for correct range
+		for(int i = 1; i < weights.length; i++){
+			if(printWeights) System.out.print("," + weights[i]);
+			if(weights[i] < -1 || weights[i] > 1){
+				System.err.println("Invalid weight at index " + i + ": " + weights[i]);
+				return false;
+			}
+			if(weights[i] > 0) neg = true;
+			if(weights[i] < 0) pos = true;
+		}
+		if(printWeights) System.out.println();
+		
+		//Test that weights are both negative and positive
+		if(!neg){
+			System.err.println("All weights are positive");
+			return false;
+		}
+		if(!pos){
+			System.err.println("All weights are negative");
+			return false;
+		}
+		
+		//Test for equivalent weights (random values shouldn't be the same)
+		int rand1 = new Random().nextInt(weights.length);
+		int rand2 = new Random().nextInt(weights.length);
+		int rand3 = new Random().nextInt(weights.length);
+		if(weights[rand1] == weights[rand2] && weights[rand2] == weights[rand3]){
+			System.err.println("Weights at indexes " + rand1 + ", " + rand2 + ", and " + rand3 + "are equal: " + weights[rand1]);
+			return false;
+		}
+		
+		System.out.println("Weight initialization tests pass! :)");
 		return true;
 	}
 }
