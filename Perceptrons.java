@@ -12,6 +12,7 @@ package hw1Perceptrons;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.StringTokenizer;
@@ -27,9 +28,11 @@ public class Perceptrons {
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
 	
-	//TODO: extract data
-	/*
+	
+	/**
 	 * Reads input file and generates training and test data sets
+	 * @param testCase: char testing against
+	 * @param target: char seeking
 	 */
 	public static void extractData(char testCase, char target){
 		testCase = Character.toUpperCase(testCase);
@@ -63,12 +66,36 @@ public class Perceptrons {
 		}
 	}
 	
-	//TODO: scale data values
-	/*
+	/**
 	 * Scales data values to be within 0 and 1
+	 * @param testInstance: Used only for unit tests
 	 */
-	public void scaleValues(){
+	public static void scaleFeatures(String[] testInstance){
 		//divide each feature value by 15
+		for(String[] instance : trainData){
+			for(int i = 1; i < instance.length; i++){
+				if(Character.isDigit(instance[i].charAt(0)))
+					instance[i] = Double.toString(Double.parseDouble(instance[i])/15);
+				else{
+					System.err.println("Invalid feature value: " + instance[i] + ".  Should be an int");
+					System.exit(0);
+				}
+			}
+		}
+		for(String[] instance : testData){
+			for(int i = 1; i < instance.length; i++){
+				if(Character.isDigit(instance[i].charAt(0)))
+					instance[i] = Double.toString(Double.parseDouble(instance[i])/15);
+				else{
+					System.err.println("Invalid feature value: " + instance[i] + ".  Should be an int");
+					System.exit(0);
+				}
+			}
+		}
+		
+		if(testInstance != null){
+			for(int i = 1; i < testInstance.length; i++) testInstance[i] = Double.toString(Double.parseDouble(testInstance[i])/15);
+		}
 	}
 	
 	//TODO: randomly generate initial +/- weights
@@ -147,12 +174,13 @@ public class Perceptrons {
 	
 	/**** Unit Tests ****/
 	public static boolean runUnitTests(){
-		testDataExtract(true);
+		testExtractData(false);
+		testScaleFeatures(false);
 		return true;
 	}
 	
-	public static boolean testDataExtract(boolean printExamples){
-		System.out.println("Testing data extraction...");
+	public static boolean testExtractData(boolean printExamples){
+		System.out.println("\nTesting data extraction...");
 		
 		extractData('B', 'A');
 		
@@ -202,7 +230,66 @@ public class Perceptrons {
 			}
 		}
 		
-		System.out.println("Extracting data tests pass! :)");
+		System.out.println("Data extraction tests pass! :)");
+		return true;
+	}
+
+	public static boolean testScaleFeatures(boolean printExamples){
+		System.out.println("\nTesting feature scaling...");
+		
+		String[] testInstance = {"A","0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		scaleFeatures(testInstance);
+		
+		if(printExamples){
+			System.out.println("\nSample Training Data:");
+			for(int i = 0; i < 5; i++){
+				String[] instance = trainData.get(i);
+				for(String feature : instance) System.out.print(feature + ",");
+				System.out.println();
+			}
+			System.out.println("\nSample Test Data:");
+			for(int i = 0; i < 5; i++){
+				String[] instance = testData.get(i);
+				for(String feature : instance) System.out.print(feature + ",");
+				System.out.println();
+			}
+			System.out.println();
+		}
+		
+		DecimalFormat df = new DecimalFormat("#.##");
+		if(!(df.format(Double.parseDouble(testInstance[2])).equals("0.07"))){
+			System.err.println("Feature not scaled correctly. Expected: 0.07; Got: " + df.format(Double.parseDouble(testInstance[2])));
+			return false;
+		}
+		if(!(df.format(Double.parseDouble(testInstance[6])).equals("0.33"))){
+			System.err.println("Feature not scaled correctly. Expected: 0.33; Got: " + df.format(Double.parseDouble(testInstance[6])));
+			return false;
+		}
+		if(!(df.format(Double.parseDouble(testInstance[16])).equals("1"))){
+			System.err.println("Feature not scaled correctly. Expected: 1.00; Got: " + df.format(Double.parseDouble(testInstance[16])));
+			return false;
+		}
+		
+		for(int i = 0; i < 5; i++){
+			int rand1 = new Random().nextInt(trainData.size());
+			int rand2 = new Random().nextInt(trainData.get(0).length-1) + 1;
+			
+			double feature = Double.parseDouble(trainData.get(rand1)[rand2]);
+			if(feature < 0 || feature > 1){
+				System.err.println("Training feature incorrectly scaled: " + feature);
+				return false;
+			}
+			
+			rand1 = new Random().nextInt(testData.size());
+			rand2 = new Random().nextInt(testData.get(0).length-1) + 1;
+			feature = Double.parseDouble(testData.get(rand1)[rand2]);
+			if(feature < 0 || feature > 1){
+				System.err.println("Test feature incorrectly scaled: " + feature);
+				return false;
+			}
+		}
+		
+		System.out.println("Feature scaling tests pass! :)");
 		return true;
 	}
 }
