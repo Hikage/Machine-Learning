@@ -98,14 +98,13 @@ public class Perceptrons {
 				testInstance[i] = Double.toString(Double.parseDouble(testInstance[i])/15);
 	}
 	
-	//TODO: randomly generate initial +/- weights
-	/*
+	/**
 	 * Initialize weights randomly, setting the first value to the bias
 	 */
 	public static void initializeWeights(){
-		//for each of the 16 weights, generate a random double
 		weights[0] = bias;
-		
+
+		//for each of the 16 weights, generate a random double
 		for(int i = 1; i < weights.length; i++){
 			boolean rand = new Random().nextBoolean();
 			int negOffset = 1;
@@ -119,13 +118,20 @@ public class Perceptrons {
 	 * Train on a specific instance example
 	 * Returns perceptron response
 	 */
-	public int processInstance(){
-		int response = 0;
-		//read line from file
-		//populate array with scaled feature values
+	public static int processInstance(int type, int index, String[] testInstance, double[] testWeights){		
 		//calculate sgn value
-		//if sgn > 0, return 1, else -1
-		return response;
+		double sgn = weights[0];
+		for(int i = 1; i < weights.length; i++){
+			if(type == TRAIN)
+				sgn += (weights[i] * Double.parseDouble(trainData.get(index)[i]));
+			else if(type == TEST)
+				sgn += (weights[i] * Double.parseDouble(testData.get(index)[i]));
+			else
+				sgn += (testWeights[i] * Double.parseDouble(testInstance[i]));
+		}
+		
+		if(sgn > 0) return 1;
+		else return -1;
 	}
 	
 	//TODO: process epoch
@@ -185,7 +191,28 @@ public class Perceptrons {
 		testExtractData(false);
 		testScaleFeatures(false);
 		testInitializeWeights(false);
+		testProcessInstance();
 		return true;
+	}
+	
+	/**
+	 * Print given instance
+	 * @param instance: instance to print
+	 */
+	public static void printInstance(String[] instance){
+		System.out.print(instance[0]);
+		for(int i = 1; i < instance.length; i++) System.out.print("," + instance[i]);
+		System.out.println();
+	}
+	
+	/**
+	 * Print given instance
+	 * @param instance: instance to print
+	 */
+	public static void printInstance(double[] instance){
+		System.out.print(instance[0]);
+		for(int i = 1; i < instance.length; i++) System.out.print("," + instance[i]);
+		System.out.println();
 	}
 	
 	public static boolean testExtractData(boolean printExamples){
@@ -195,17 +222,11 @@ public class Perceptrons {
 		
 		if(printExamples){
 			System.out.println("\nSample Training Data:");
-			for(int i = 0; i < 5; i++){
-				String[] instance = trainData.get(i);
-				for(String feature : instance) System.out.print(feature + ",");
-				System.out.println();
-			}
+			for(int i = 0; i < 5; i++) printInstance(trainData.get(i));
+			
 			System.out.println("\nSample Test Data:");
-			for(int i = 0; i < 5; i++){
-				String[] instance = testData.get(i);
-				for(String feature : instance) System.out.print(feature + ",");
-				System.out.println();
-			}
+			for(int i = 0; i < 5; i++) printInstance(testData.get(i));
+			
 			System.out.println();
 		}
 		
@@ -219,8 +240,7 @@ public class Perceptrons {
 			}
 			if(instance.length != 17){
 				System.err.println("Invalid number of training instance features: " + instance.length);
-				for(String feature : instance) System.out.print(feature);
-				System.out.println();
+				printInstance(instance);
 				return false;
 			}
 			
@@ -233,8 +253,7 @@ public class Perceptrons {
 			}
 			if(instance.length != 17){
 				System.err.println("Invalid number of training instance features: " + instance.length);
-				for(String feature : instance) System.out.print(feature);
-				System.out.println();
+				printInstance(instance);
 				return false;
 			}
 		}
@@ -251,17 +270,11 @@ public class Perceptrons {
 		
 		if(printExamples){
 			System.out.println("\nSample Training Data:");
-			for(int i = 0; i < 5; i++){
-				String[] instance = trainData.get(i);
-				for(String feature : instance) System.out.print(feature + ",");
-				System.out.println();
-			}
+			for(int i = 0; i < 5; i++) printInstance(trainData.get(i));
+			
 			System.out.println("\nSample Test Data:");
-			for(int i = 0; i < 5; i++){
-				String[] instance = testData.get(i);
-				for(String feature : instance) System.out.print(feature + ",");
-				System.out.println();
-			}
+			for(int i = 0; i < 5; i++) printInstance(testData.get(i));
+			
 			System.out.println();
 		}
 		
@@ -312,14 +325,13 @@ public class Perceptrons {
 			System.err.println("First index of weights should be the bias (" + bias + "): " + weights[0]);
 			return false;
 		}
-		if(printWeights) System.out.print(weights[0]);
+		if(printWeights) printInstance(weights);
 		
 		boolean neg = false;
 		boolean pos = false;
 		
 		//Test for correct range
 		for(int i = 1; i < weights.length; i++){
-			if(printWeights) System.out.print("," + weights[i]);
 			if(weights[i] < -1 || weights[i] > 1){
 				System.err.println("Invalid weight at index " + i + ": " + weights[i]);
 				return false;
@@ -327,7 +339,6 @@ public class Perceptrons {
 			if(weights[i] > 0) neg = true;
 			if(weights[i] < 0) pos = true;
 		}
-		if(printWeights) System.out.println();
 		
 		//Test that weights are both negative and positive
 		if(!neg){
@@ -349,6 +360,31 @@ public class Perceptrons {
 		}
 		
 		System.out.println("Weight initialization tests pass! :)");
+		return true;
+	}
+	
+	public static boolean testProcessInstance(){
+		System.out.println("\nTesting instance processing...");
+		
+		String[] testInstance = {"A","0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		scaleFeatures(testInstance);
+		double[] negWeights = {1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		double[] posWeights = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+		double[] eqWeights = {1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1};
+		if(processInstance(3, 0, testInstance, negWeights) != -1){
+			System.err.println("Result with negative weights should be negative");
+			return false;
+		}
+		if(processInstance(3, 0, testInstance, posWeights) != 1){
+			System.err.println("Result with positive weights should be positive");
+			return false;
+		}
+		if(processInstance(3, 0, testInstance, eqWeights) != 1){
+			System.err.println("Result with equal weights should be positive");
+			return false;
+		}
+		
+		System.out.println("Instance processing tests pass! :)");
 		return true;
 	}
 }
