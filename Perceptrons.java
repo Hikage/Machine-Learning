@@ -27,6 +27,8 @@ public class Perceptrons {
 	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
+	private static double[] wDelta = new double[17];
+	private static double[] avgDelta = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	
 	
 	/**
@@ -113,10 +115,13 @@ public class Perceptrons {
 		}
 	}
 	
-	//TODO: process training example
-	/*
+	/**
 	 * Train on a specific instance example
-	 * Returns perceptron response
+	 * @param type: training data, testing data, or unit test
+	 * @param index: which instance we're processing
+	 * @param testInstance: unit test sample data
+	 * @param testWeights: unit test sample weights
+	 * @return: the sgn value of the perceptron on the given instance - 1 if deemed a match, -1 otherwise
 	 */
 	public static int processInstance(int type, int index, String[] testInstance, double[] testWeights){		
 		//calculate sgn value
@@ -139,9 +144,33 @@ public class Perceptrons {
 	 * Cycles through each training example to calculate
 	 * new weights
 	 */
-	public void trainEpoch(){
-		//processInstance()
-		//if incorrect classification,  update weights
+	public static double trainEpoch(char target, boolean test){
+		if(test) printInstance(weights);
+		double tlAcc = 0;
+		for(int i = 0; i < trainData.size(); i++){
+			int result = processInstance(TRAIN, i, null, null);
+			int tar;
+			if(trainData.get(i)[0].charAt(0) == target) tar = 1;
+			else tar = -1;
+			
+			tlAcc += (1 - Math.abs(tar - result)/2);
+			
+			if(test){
+				System.out.print("Result: " + result + "; Target: " + tar + "; ");
+				printInstance(trainData.get(i));
+			}
+			
+			//update weights after each instance
+			//instances classified correctly will result in a no-op
+			weights[0] += lrate * (tar - result);
+			for(int j = 1; j < weights.length; j++){
+				weights[j] += lrate * (tar - result) * Double.parseDouble(trainData.get(i)[j]);
+			}
+			
+			if(test) printInstance(weights);
+		}
+		
+		return tlAcc;
 	}
 	
 	//TODO: epoch cycling
@@ -153,6 +182,8 @@ public class Perceptrons {
 		//avgWgt = 1
 		//trainEpoch()
 		//calculate weight difference
+
+		//avgDelta[0] = (avgDelta[0] * (i+1)/(i+2)) + (lrate * (tar-result) / (i+2));
 		//if weights have converged, stop
 	}
 	
@@ -177,7 +208,7 @@ public class Perceptrons {
 	}
 	
 	public static void main(String args[]){
-		runUnitTests();
+		if(!runUnitTests()) System.exit(0);
 		
 		//initializeWeights()
 		//extract all As and Bs from data
@@ -188,10 +219,11 @@ public class Perceptrons {
 	
 	/**** Unit Tests ****/
 	public static boolean runUnitTests(){
-		testExtractData(false);
-		testScaleFeatures(false);
-		testInitializeWeights(false);
-		testProcessInstance();
+		if(!testExtractData(false)) return false;
+		if(!testScaleFeatures(false)) return false;
+		if(!testInitializeWeights(false)) return false;
+		if(!testProcessInstance()) return false;
+		if(!testTrainEpoch(false)) return false;
 		return true;
 	}
 	
@@ -201,7 +233,8 @@ public class Perceptrons {
 	 */
 	public static void printInstance(String[] instance){
 		System.out.print(instance[0]);
-		for(int i = 1; i < instance.length; i++) System.out.print("," + instance[i]);
+		DecimalFormat df = new DecimalFormat("#.##");
+		for(int i = 1; i < instance.length; i++) System.out.print("," + df.format(Double.parseDouble(instance[i])));
 		System.out.println();
 	}
 	
@@ -211,8 +244,17 @@ public class Perceptrons {
 	 */
 	public static void printInstance(double[] instance){
 		System.out.print(instance[0]);
-		for(int i = 1; i < instance.length; i++) System.out.print("," + instance[i]);
+		DecimalFormat df = new DecimalFormat("#.##");
+		for(int i = 1; i < instance.length; i++) System.out.print("," + df.format(instance[i]));
 		System.out.println();
+	}
+	
+	/**
+	 * Resets global data arrays
+	 */
+	public static void clearData(){
+		trainData.clear();
+		testData.clear();
 	}
 	
 	public static boolean testExtractData(boolean printExamples){
@@ -385,6 +427,19 @@ public class Perceptrons {
 		}
 		
 		System.out.println("Instance processing tests pass! :)");
+		return true;
+	}
+
+	public static boolean testTrainEpoch(boolean printInstances){
+		System.out.println("\nTesting epoch training...");
+
+		clearData();
+		extractData('A', 'A');
+		scaleFeatures(null);
+		initializeWeights();
+		trainEpoch('A', printInstances);
+		
+		System.out.println("Epoch training tests pass! :)");
 		return true;
 	}
 }
