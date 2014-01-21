@@ -139,10 +139,11 @@ public class Perceptrons {
 		else return -1;
 	}
 	
-	//TODO: process epoch
-	/*
-	 * Cycles through each training example to calculate
-	 * new weights
+	/**
+	 * Cycles through each training example to calculate new weights
+	 * @param target: character sought
+	 * @param test: used for unit test printing
+	 * @return: accuracy value of epoch
 	 */
 	public static double trainEpoch(char target, boolean test){
 		if(test) printInstance(weights);
@@ -170,21 +171,35 @@ public class Perceptrons {
 			if(test) printInstance(weights);
 		}
 		
-		return tlAcc;
+		return tlAcc/trainData.size();
 	}
 	
-	//TODO: epoch cycling
-	/*
+	/**
 	 * Process epoch and calculate accuracy
 	 * Stop once weights converge
+	 * @param target: character sought
+	 * @param convThresh: theshold past which to stop processing epochs
+	 * @param test: used only for unit testing
+	 * @return: returns the final accuracy
 	 */
-	public void cycleEpochs(){
-		//avgWgt = 1
-		//trainEpoch()
-		//calculate weight difference
-
-		//avgDelta[0] = (avgDelta[0] * (i+1)/(i+2)) + (lrate * (tar-result) / (i+2));
-		//if weights have converged, stop
+	public static double cycleEpochs(char target, double convThresh, boolean test){
+		double avgDiff = 0;
+		double acc = 0;
+		do{
+			double[] prevWeights = weights.clone();
+			acc = trainEpoch(target, false);
+			//calculate weight difference
+			double[] wDiff = new double[weights.length];
+			for(int i = 0; i < wDiff.length; i++){
+				wDiff[i] = weights[i] - prevWeights[i];
+				avgDiff += wDiff[i];
+			}
+			avgDiff /= wDiff.length;
+			DecimalFormat df = new DecimalFormat("#.##");
+			if(test) System.out.println(df.format(avgDiff) + "; " + df.format(acc));
+		}while (Math.abs(avgDiff) >= convThresh);
+		
+		return acc;
 	}
 	
 	//TODO: test against test set
@@ -224,6 +239,7 @@ public class Perceptrons {
 		if(!testInitializeWeights(false)) return false;
 		if(!testProcessInstance()) return false;
 		if(!testTrainEpoch(false)) return false;
+		if(!testCycleEpochs(true)) return false;
 		return true;
 	}
 	
@@ -440,6 +456,27 @@ public class Perceptrons {
 		trainEpoch('A', printInstances);
 		
 		System.out.println("Epoch training tests pass! :)");
+		return true;
+	}
+	
+	public static boolean testCycleEpochs(boolean printAvgWts){
+		System.out.println("\nTesting epoch cycling...");
+
+		clearData();
+		extractData('A', 'B');
+		scaleFeatures(null);
+		initializeWeights();
+		double acc = cycleEpochs('A', 0.02, false);
+		if(acc < .5){
+			System.err.println("Accuracy shouldn't be this low after full epoch cycling: " + acc);
+			return false;
+		}
+		if(acc > 1){
+			System.err.println("Accuracy shouldn't be greater than 100%: " + acc);
+			return false;
+		}
+		
+		System.out.println("Epoch cycling tests pass! :)");
 		return true;
 	}
 }
