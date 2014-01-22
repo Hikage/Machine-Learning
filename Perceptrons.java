@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 public class Perceptrons {
 
@@ -27,8 +26,8 @@ public class Perceptrons {
 	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
-	private static double[] wDelta = new double[17];
-	private static double[] avgDelta = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+	private static int numEpochs = 0;
+	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
 	
 	
 	/**
@@ -123,7 +122,7 @@ public class Perceptrons {
 	 * @param testWeights: unit test sample weights
 	 * @return: the sgn value of the perceptron on the given instance - 1 if deemed a match, -1 otherwise
 	 */
-	public static int processInstance(int type, int index, String[] testInstance, double[] testWeights){		
+	public static double processInstance(int type, int index, String[] testInstance, double[] testWeights){		
 		//calculate sgn value
 		double sgn = weights[0];
 		for(int i = 1; i < weights.length; i++){
@@ -135,7 +134,18 @@ public class Perceptrons {
 				sgn += (testWeights[i] * Double.parseDouble(testInstance[i]));
 		}
 		
-		if(sgn > 0) return 1;
+		return sgn;
+	}
+	
+	/**
+	 * Allows for a variable threshold with which to classify
+	 * instance results
+	 * @param sgn: sgn value of instance
+	 * @param thresh: theshold against which to classify
+	 * @return: returns 1 if deemed a positive match, -1 otherwise
+	 */
+	public static int classifyInstance(double sgn, double thresh){
+		if(sgn > thresh) return 1;
 		else return -1;
 	}
 	
@@ -149,23 +159,25 @@ public class Perceptrons {
 		if(test) printInstance(weights);
 		int tlAcc = 0;
 		for(int i = 0; i < trainData.size(); i++){
-			int result = processInstance(TRAIN, i, null, null);
-			int tar;
+			double sgn = processInstance(TRAIN, i, null, null);
+			
+			int result, tar;
 			if(trainData.get(i)[0].charAt(0) == target) tar = 1;
 			else tar = -1;
-			
-			tlAcc += (1 - Math.abs(tar - result)/2);
+
+			int classif = classifyInstance(sgn, 0);
+			tlAcc += (1 - Math.abs(tar - classif)/2);
 			
 			if(test){
-				System.out.print("Result: " + result + "; Target: " + tar + "; ");
+				System.out.print("Result: " + classif + "; Target: " + tar + "; ");
 				printInstance(trainData.get(i));
 			}
 			
 			//update weights after each instance
 			//instances classified correctly will result in a no-op
-			weights[0] += lrate * (tar - result);
+			weights[0] += lrate * (tar - classif);
 			for(int j = 1; j < weights.length; j++){
-				weights[j] += lrate * (tar - result) * Double.parseDouble(trainData.get(i)[j]);
+				weights[j] += lrate * (tar - classif) * Double.parseDouble(trainData.get(i)[j]);
 			}
 			
 			if(test) printInstance(weights);
@@ -185,6 +197,7 @@ public class Perceptrons {
 	public static double cycleEpochs(char target, double convThresh, boolean test){
 		double avgDiff = 0;
 		double acc = 0.0;
+		numEpochs = 0;
 		do{
 			double[] prevWeights = weights.clone();
 			acc = trainEpoch(target, false);
@@ -195,8 +208,13 @@ public class Perceptrons {
 				avgDiff += wDiff[i];
 			}
 			avgDiff /= wDiff.length;
-			DecimalFormat df = new DecimalFormat("#.##");
-			if(test) System.out.println(df.format(avgDiff) + "; " + df.format(acc));
+			
+			numEpochs++;
+			
+			if(test){
+				DecimalFormat df = new DecimalFormat("#.##");
+				System.out.println(df.format(avgDiff) + "; " + df.format(acc));
+			}
 		}while (Math.abs(avgDiff) >= convThresh);
 		
 		return acc;
@@ -206,31 +224,51 @@ public class Perceptrons {
 	 * Test current perceptron against test data set
 	 * Returns current accuracy
 	 * @param target: character sought
+	 * @param cthresh: theshold against which to classify
 	 * @return: returns an array representing the confusion matrix
 	 */
-	public static int[] testData(char target){
+	public static int[] testData(char target, double cthresh){
 		int[] conMtrx = new int[4];
 		//process each testing instance
 		for(int i = 0; i < testData.size(); i++){
-			int result = processInstance(TEST, i, null, null);
+			double[] iResults = new double[2];
+			double sgn = processInstance(TEST, i, null, null);
+			iResults[0] = sgn;
+			
+			int classif = classifyInstance(sgn, cthresh);
 			
 			//calculate running confusion matrix
 			if(testData.get(i)[0].charAt(0) == target){
-				if(result > 0) conMtrx[TP]++;
+				iResults[1] = 1;
+				if(classif > 0) conMtrx[TP]++;
 				else conMtrx[FN]++;
 			}
 			else{
-				if(result > 0) conMtrx[FP]++;
+				iResults[1] = -1;
+				if(classif > 0) conMtrx[FP]++;
 				else conMtrx[TN]++;
 			}
+			
+			testScores.add(iResults);
 		}
 		return conMtrx;
 	}
 	
-	public void printResults(int[] results){
-		//print accuracy
+	public void printResults(int[] conMtrx){
+		//print epochs and accuracy
+		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
+		DecimalFormat df = new DecimalFormat("###.##%");
+		System.out.println("Epochs: " + numEpochs + "; Accuracy: " + df.format(teacc));
+		
 		//print confusion matrix
+		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN]);
+		
 		//print precision and recall
+		double precision = conMtrx[TP] / (conMtrx[TP] + conMtrx[FP]);
+		double recall = conMtrx[TP] / (conMtrx[TP] + conMtrx[FN]);
+		System.out.println("Precision: " + precision + "; Recall: " + recall);
+		
 		//print data for ROC curve
 	}
 	
@@ -250,9 +288,10 @@ public class Perceptrons {
 		if(!testScaleFeatures(false)) return false;
 		if(!testInitializeWeights(false)) return false;
 		if(!testProcessInstance()) return false;
+		if(!testClassifyInstance()) return false;
 		if(!testTrainEpoch(false)) return false;
 		if(!testCycleEpochs(false)) return false;
-		if(!testTestData(false)) return false;
+		if(!testTestData(true)) return false;
 		return true;
 	}
 	
@@ -442,20 +481,45 @@ public class Perceptrons {
 		double[] negWeights = {1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		double[] posWeights = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 		double[] eqWeights = {1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1};
-		if(processInstance(3, 0, testInstance, negWeights) != -1){
+		if(processInstance(3, 0, testInstance, negWeights) > 0){
 			System.err.println("Result with negative weights should be negative");
 			return false;
 		}
-		if(processInstance(3, 0, testInstance, posWeights) != 1){
+		if(processInstance(3, 0, testInstance, posWeights) < 0){
 			System.err.println("Result with positive weights should be positive");
 			return false;
 		}
-		if(processInstance(3, 0, testInstance, eqWeights) != 1){
+		if(processInstance(3, 0, testInstance, eqWeights) < 0){
 			System.err.println("Result with equal weights should be positive");
 			return false;
 		}
 		
 		System.out.println("Instance processing tests pass! :)");
+		return true;
+	}
+	
+	public static boolean testClassifyInstance(){
+		System.out.println("\nTesting instance classification...");
+		
+		String[] testInstance = {"A","0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		scaleFeatures(testInstance);
+		double[] negWeights = {1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		double[] posWeights = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+		double[] eqWeights = {1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1};
+		if(classifyInstance(processInstance(3, 0, testInstance, negWeights), 0) != -1){
+			System.err.println("Result with negative weights should be negative");
+			return false;
+		}
+		if(classifyInstance(processInstance(3, 0, testInstance, posWeights), 0) != 1){
+			System.err.println("Result with positive weights should be positive");
+			return false;
+		}
+		if(classifyInstance(processInstance(3, 0, testInstance, eqWeights), 0) != 1){
+			System.err.println("Result with equal weights should be positive");
+			return false;
+		}
+		
+		System.out.println("Instance classification tests pass! :)");
 		return true;
 	}
 
@@ -493,7 +557,7 @@ public class Perceptrons {
 		return true;
 	}
 
-	public static boolean testTestData(boolean printAccs){
+	public static boolean testTestData(boolean printResults){
 		System.out.println("\nTesting test data...");
 
 		clearData();
@@ -502,13 +566,18 @@ public class Perceptrons {
 		initializeWeights();
 		double tracc = cycleEpochs('A', 0.02, false);
 		
-		int[] conMtrx = testData('A');
+		int[] conMtrx = testData('A', 0);
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		DecimalFormat df = new DecimalFormat("###.##%");
 		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));		
 		
-		if(printAccs) System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));
+		if(printResults){
+			System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));
+			for(int i = 0; i < 10; i++){
+				System.out.println("Score: " + testScores.get(i)[0] + "; Classification: " + testScores.get(i)[1]);
+			}
+		}
 		
 		if(Math.abs(tracc - teacc) > .5){
 			System.err.println("Accuracy differences shouldn't be greater than 5% between training and testing: "
