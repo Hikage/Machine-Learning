@@ -269,33 +269,51 @@ public class Perceptrons {
 		return conMtrx;
 	}
 	
-	public void printResults(int[] conMtrx){
-		//print epochs and accuracy
-		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
-		DecimalFormat df = new DecimalFormat("###.##%");
-		System.out.println("Epochs: " + numEpochs + "; Accuracy: " + df.format(teacc));
+	public static void printConMtrx(int[] conMtrx){
+		DecimalFormat df = new DecimalFormat("#.##");
 		
 		//print confusion matrix
 		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN]);
 		
+		//print accuracy
+		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
+		System.out.print("Accuracy: " + df.format(teacc));
+		
 		//print precision and recall
 		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
 		double recall = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
-		System.out.println("Precision: " + precision + "; Recall: " + recall);
+		System.out.print("; Precision: " + df.format(precision) + "; Recall: " + df.format(recall));
 		
 		//print data for ROC curve
 		double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
 		double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
+		System.out.print("; TPR: " + df.format(TPR) + "; FPR: " + df.format(FPR) + "\n");
+	}
+	
+	public static void printResults(ArrayList<double[]> testScores, int slices){
+		//print epochs
+		System.out.println("Epochs: " + numEpochs);
+		int[] baseConMtrx = calcConfusionMatrix(testScores, 0);
+		printConMtrx(baseConMtrx);
+		
+		//for ROC curve
+		for(double i = -16; i <= 16; i += (32/slices)){
+			System.out.print("Thresh: " + i + "; ");
+			int[] conMtrx = calcConfusionMatrix(testScores, i);
+			printConMtrx(conMtrx);
+		}
 	}
 	
 	public static void main(String args[]){
-		if(!runUnitTests()) System.exit(0);
+		//if(!runUnitTests()) System.exit(0);
 		
-		//initializeWeights()
-		//extract all As and Bs from data
-		//for first half of extracted data, train
-		//test on second half
+		extractData('A', 'B');
+		scaleFeatures(null);
+		initializeWeights();
+		cycleEpochs('A', 0.02, false);
+		ArrayList<double[]> testScores = testData('A');
+		printResults(testScores, 32);
 	}
 	
 	
