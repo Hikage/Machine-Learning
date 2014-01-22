@@ -22,8 +22,8 @@ public class Perceptrons {
 	private static final String inputFile = "src/hw1Perceptrons/letter-recognition.data";
 	private static final double lrate = 0.2;
 	private static final int bias = 1;
-	private static final int TRAIN = 0;
-	private static final int TEST = 1;
+	private static final int TRAIN = 0, TEST = 1;
+	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
 	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
@@ -147,7 +147,7 @@ public class Perceptrons {
 	 */
 	public static double trainEpoch(char target, boolean test){
 		if(test) printInstance(weights);
-		double tlAcc = 0;
+		int tlAcc = 0;
 		for(int i = 0; i < trainData.size(); i++){
 			int result = processInstance(TRAIN, i, null, null);
 			int tar;
@@ -171,7 +171,7 @@ public class Perceptrons {
 			if(test) printInstance(weights);
 		}
 		
-		return tlAcc/trainData.size();
+		return (tlAcc * 1.0)/trainData.size();
 	}
 	
 	/**
@@ -184,7 +184,7 @@ public class Perceptrons {
 	 */
 	public static double cycleEpochs(char target, double convThresh, boolean test){
 		double avgDiff = 0;
-		double acc = 0;
+		double acc = 0.0;
 		do{
 			double[] prevWeights = weights.clone();
 			acc = trainEpoch(target, false);
@@ -202,17 +202,29 @@ public class Perceptrons {
 		return acc;
 	}
 	
-	//TODO: test against test set
-	/*
-	 * Test current perceptron against test
-	 * data set, returning current accuracy
+	/**
+	 * Test current perceptron against test data set
+	 * Returns current accuracy
+	 * @param target: character sought
+	 * @return: returns an array representing the confusion matrix
 	 */
-	public int[] testData(){
-		int[] results = new int[4];
-		final int TP = 0, FP = 1, FN = 2, TN = 3;
-		//for each line, processInstance()
-		//calculate running confusion matrix
-		return results;
+	public static int[] testData(char target){
+		int[] conMtrx = new int[4];
+		//process each testing instance
+		for(int i = 0; i < testData.size(); i++){
+			int result = processInstance(TEST, i, null, null);
+			
+			//calculate running confusion matrix
+			if(testData.get(i)[0].charAt(0) == target){
+				if(result > 0) conMtrx[TP]++;
+				else conMtrx[FN]++;
+			}
+			else{
+				if(result > 0) conMtrx[FP]++;
+				else conMtrx[TN]++;
+			}
+		}
+		return conMtrx;
 	}
 	
 	public void printResults(int[] results){
@@ -239,7 +251,8 @@ public class Perceptrons {
 		if(!testInitializeWeights(false)) return false;
 		if(!testProcessInstance()) return false;
 		if(!testTrainEpoch(false)) return false;
-		if(!testCycleEpochs(true)) return false;
+		if(!testCycleEpochs(false)) return false;
+		if(!testTestData(false)) return false;
 		return true;
 	}
 	
@@ -466,7 +479,7 @@ public class Perceptrons {
 		extractData('A', 'B');
 		scaleFeatures(null);
 		initializeWeights();
-		double acc = cycleEpochs('A', 0.02, false);
+		double acc = cycleEpochs('A', 0.02, printAvgWts);
 		if(acc < .5){
 			System.err.println("Accuracy shouldn't be this low after full epoch cycling: " + acc);
 			return false;
@@ -477,6 +490,33 @@ public class Perceptrons {
 		}
 		
 		System.out.println("Epoch cycling tests pass! :)");
+		return true;
+	}
+
+	public static boolean testTestData(boolean printAccs){
+		System.out.println("\nTesting test data...");
+
+		clearData();
+		extractData('A', 'B');
+		scaleFeatures(null);
+		initializeWeights();
+		double tracc = cycleEpochs('A', 0.02, false);
+		
+		int[] conMtrx = testData('A');
+		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
+		DecimalFormat df = new DecimalFormat("###.##%");
+		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));		
+		
+		if(printAccs) System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));
+		
+		if(Math.abs(tracc - teacc) > .5){
+			System.err.println("Accuracy differences shouldn't be greater than 5% between training and testing: "
+					+ df.format(tracc) + "; " + df.format(teacc));
+			return false;
+		}
+		
+		System.out.println("Test data tests pass! :)");
 		return true;
 	}
 }
