@@ -27,7 +27,6 @@ public class Perceptrons {
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
 	private static int numEpochs = 0;
-	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
 	
 	
 	/**
@@ -224,32 +223,48 @@ public class Perceptrons {
 	 * Test current perceptron against test data set
 	 * Returns current accuracy
 	 * @param target: character sought
-	 * @param cthresh: theshold against which to classify
-	 * @return: returns an array representing the confusion matrix
+	 * @return: returns an array representing the the scores and true classes
 	 */
-	public static int[] testData(char target, double cthresh){
-		int[] conMtrx = new int[4];
+	public static ArrayList<double[]> testData(char target){
+		ArrayList<double[]> testScores = new ArrayList<double[]>();
+		
 		//process each testing instance
 		for(int i = 0; i < testData.size(); i++){
 			double[] iResults = new double[2];
 			double sgn = processInstance(TEST, i, null, null);
 			iResults[0] = sgn;
 			
-			int classif = classifyInstance(sgn, cthresh);
-			
 			//calculate running confusion matrix
-			if(testData.get(i)[0].charAt(0) == target){
-				iResults[1] = 1;
+			if(testData.get(i)[0].charAt(0) == target) iResults[1] = 1;
+			else iResults[1] = -1;
+			
+			testScores.add(iResults);
+		}
+		
+		return testScores;
+	}
+	
+	/**
+	 * Calculates the current confusion matrix
+	 * based on scores, actuals, and a provided threshold
+	 * @param testScores: test data scores and true classes
+	 * @param cthresh: threshold against which to classify
+	 * @return: returns the confusion matrix
+	 */
+	public static int[] calcConfusionMatrix(ArrayList<double[]> testScores, double cthresh){
+		int[] conMtrx = new int[4];
+		for(int i = 0; i < testScores.size(); i++){			
+			int classif = classifyInstance(testScores.get(i)[0], cthresh);
+			
+			//calculate confusion matrix
+			if(testScores.get(i)[1] == 1){
 				if(classif > 0) conMtrx[TP]++;
 				else conMtrx[FN]++;
 			}
 			else{
-				iResults[1] = -1;
 				if(classif > 0) conMtrx[FP]++;
 				else conMtrx[TN]++;
 			}
-			
-			testScores.add(iResults);
 		}
 		return conMtrx;
 	}
@@ -265,11 +280,13 @@ public class Perceptrons {
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN]);
 		
 		//print precision and recall
-		double precision = conMtrx[TP] / (conMtrx[TP] + conMtrx[FP]);
-		double recall = conMtrx[TP] / (conMtrx[TP] + conMtrx[FN]);
+		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
+		double recall = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
 		System.out.println("Precision: " + precision + "; Recall: " + recall);
 		
 		//print data for ROC curve
+		double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
+		double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
 	}
 	
 	public static void main(String args[]){
@@ -291,7 +308,8 @@ public class Perceptrons {
 		if(!testClassifyInstance()) return false;
 		if(!testTrainEpoch(false)) return false;
 		if(!testCycleEpochs(false)) return false;
-		if(!testTestData(true)) return false;
+		if(!testTestData(false)) return false;
+		if(!testCalcConfusionMatrix(false)) return false;
 		return true;
 	}
 	
@@ -564,28 +582,77 @@ public class Perceptrons {
 		extractData('A', 'B');
 		scaleFeatures(null);
 		initializeWeights();
+		cycleEpochs('A', 0.02, false);
+		
+		ArrayList<double[]> testScores = testData('A');
+		
+		if(printResults){
+			for(int i = 0; i < 10; i++){
+				System.out.println("Score: " + testScores.get(i)[0] + "; Classification: " + testScores.get(i)[1]);
+			}
+		}
+		
+		System.out.println("Test data tests pass! :)");
+		return true;
+	}
+	
+	public static boolean testCalcConfusionMatrix(boolean printResults){
+		System.out.println("\nTesting confusion matrix calculation...");
+		
+		clearData();
+		extractData('A', 'B');
+		scaleFeatures(null);
+		initializeWeights();
 		double tracc = cycleEpochs('A', 0.02, false);
 		
-		int[] conMtrx = testData('A', 0);
+		ArrayList<double[]> testScores = testData('A');
+		
+		//Test 0 threshold
+		int[] conMtrx = calcConfusionMatrix(testScores, 0);		
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		DecimalFormat df = new DecimalFormat("###.##%");
 		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));		
 		
 		if(printResults){
-			System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));
-			for(int i = 0; i < 10; i++){
-				System.out.println("Score: " + testScores.get(i)[0] + "; Classification: " + testScores.get(i)[1]);
-			}
+			System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));			
 		}
 		
-		if(Math.abs(tracc - teacc) > .5){
+		if(Math.abs(tracc - teacc) > .05){
 			System.err.println("Accuracy differences shouldn't be greater than 5% between training and testing: "
 					+ df.format(tracc) + "; " + df.format(teacc));
 			return false;
 		}
 		
-		System.out.println("Test data tests pass! :)");
+		
+		//Test large negative threshold
+		conMtrx = calcConfusionMatrix(testScores, -20);		
+		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
+		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+		
+		if(conMtrx[TN] + conMtrx[FN] > 0){
+			System.err.println("Nothing should be classified as negative with such a low threshold" +
+					"TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+			return false;
+		}
+		
+		//Test large negative threshold
+		conMtrx = calcConfusionMatrix(testScores, 20);		
+		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
+		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+		
+		if(conMtrx[TP] + conMtrx[FP] > 0){
+			System.err.println("Nothing should be classified as positive with such a high threshold:" +
+					"TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+			return false;
+		}
+		
+		
+		System.out.println("Confusion matrix calculation tests pass! :)");
 		return true;
 	}
 }
