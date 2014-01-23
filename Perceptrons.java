@@ -29,6 +29,8 @@ public class Perceptrons {
 	private static int maxSgn = 0;
 	private static int numEpochs = 0;
 	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
+	private static final DecimalFormat pf = new DecimalFormat("#.##%");
+	private static final DecimalFormat df = new DecimalFormat("#.##");
 	
 	
 	/**
@@ -215,7 +217,6 @@ public class Perceptrons {
 			numEpochs++;
 			
 			if(test){
-				DecimalFormat df = new DecimalFormat("#.##");
 				System.out.println(df.format(avgDiff) + "; " + df.format(acc));
 			}
 		}while (Math.abs(avgDiff) >= convThresh);
@@ -278,8 +279,8 @@ public class Perceptrons {
 	 */
 	public static String conMtrxToString(int[] conMtrx){
 		//print confusion matrix
-		return "TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-				+ conMtrx[FN] + "; TN: " + conMtrx[TN];
+		return "TP-" + conMtrx[TP] + ", FP-" + conMtrx[FP] + ", FN-"
+				+ conMtrx[FN] + ", TN-" + conMtrx[TN];
 	}
 	
 	/**
@@ -287,12 +288,10 @@ public class Perceptrons {
 	 * @param conMtrx: confusion matrix across which to calculate accuracy
 	 * @return: returns the string representation of accuracy
 	 */
-	public static String accToString(int[] conMtrx){
-		DecimalFormat df = new DecimalFormat("#.####%");
-		
+	public static String accToString(int[] conMtrx){		
 		//print accuracy
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
-		return "Accuracy: " + df.format(teacc);
+		return "Acc: " + pf.format(teacc);
 	}
 	
 	/**
@@ -300,13 +299,11 @@ public class Perceptrons {
 	 * @param conMtrx: confusion matrix across which to calculate the precision and recall
 	 * @return: returns the string representation of precision and recall
 	 */
-	public static String preRecToString(int[] conMtrx){
-		DecimalFormat df = new DecimalFormat("#.####%");
-		
+	public static String preRecToString(int[] conMtrx){		
 		//print precision and recall
 		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
 		double recall = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
-		return "Precision: " + df.format(precision) + "; Recall: " + df.format(recall);		
+		return "Precision: " + pf.format(precision) + ", Recall: " + pf.format(recall);		
 	}
 	
 	
@@ -318,21 +315,22 @@ public class Perceptrons {
 	 * @param slices: number of plot points to calculate
 	 */
 	public static void printROCData(int slices){
-		DecimalFormat df = new DecimalFormat("#.####%");
 		double max = (maxSgn + 1);
 		double min = max * -1;
 		double interval = max * 2 / slices;
 		
+		System.out.println("ROC data:");
+		
 		//calculate all points of the ROC curve
 		for(double i = min; i <= max; i += interval){
-			System.out.print("(" + i + "): ");
+			System.out.print("(" + df.format(i) + "): ");
 			int[] conMtrx = calcConfusionMatrix(i);
-			System.out.print(conMtrxToString(conMtrx) + " - ");
+			System.out.print(conMtrxToString(conMtrx) + "; ");
 			
 			//print data for ROC curve
 			double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
 			double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
-			System.out.print(accToString(conMtrx) + "; TPR: " + df.format(TPR) + "; FPR: " + df.format(FPR) + "\n");
+			System.out.print(accToString(conMtrx) + ", TPR: " + pf.format(TPR) + ", FPR: " + pf.format(FPR) + "\n");
 			if(TPR + FPR == 0) break;
 		}
 	}
@@ -344,19 +342,19 @@ public class Perceptrons {
 	 */
 	public static void printResults(char target, char testCase){
 		//print test data
-		System.out.println(target + " vs. " + testCase + "(" + numEpochs + " epochs)");
+		System.out.println(target + " vs " + testCase + " (" + numEpochs + " epochs)");
 		int[] baseConMtrx = calcConfusionMatrix(0);
 		System.out.println(conMtrxToString(baseConMtrx));
-		System.out.println(accToString(baseConMtrx) + "; " + preRecToString(baseConMtrx) + "\n");
+		System.out.println(accToString(baseConMtrx) + ", " + preRecToString(baseConMtrx) + "\n");
 	}
 	
 	
 	/**** Main ****/
 	
 	public static void main(String args[]){
-		boolean testmode = true;
+		boolean testmode = false;
 		double wConvrgThresh = 0.01;
-		int numROCSlices = 32;
+		int numROCSlices = 100;
 		char target = 'A';
 		char testCase = 'B';
 		
@@ -403,7 +401,6 @@ public class Perceptrons {
 	 */
 	public static void printInstance(String[] instance){
 		System.out.print(instance[0]);
-		DecimalFormat df = new DecimalFormat("#.##");
 		for(int i = 1; i < instance.length; i++) System.out.print("," + df.format(Double.parseDouble(instance[i])));
 		System.out.println();
 	}
@@ -414,7 +411,6 @@ public class Perceptrons {
 	 */
 	public static void printInstance(double[] instance){
 		System.out.print(instance[0]);
-		DecimalFormat df = new DecimalFormat("#.##");
 		for(int i = 1; i < instance.length; i++) System.out.print("," + df.format(instance[i]));
 		System.out.println();
 	}
@@ -501,7 +497,6 @@ public class Perceptrons {
 			System.out.println();
 		}
 		
-		DecimalFormat df = new DecimalFormat("#.##");
 		if(!(df.format(Double.parseDouble(testInstance[2])).equals("0.07"))){
 			System.err.println("Feature not scaled correctly. Expected: 0.07; Got: " + df.format(Double.parseDouble(testInstance[2])));
 			return false;
@@ -758,16 +753,15 @@ public class Perceptrons {
 		}
 		
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
-		DecimalFormat df = new DecimalFormat("###.##%");
-		System.out.println(conMtrxToString(conMtrx) + "; Accuracy: " + df.format(teacc));		
+		System.out.println(conMtrxToString(conMtrx) + "; Accuracy: " + pf.format(teacc));		
 		
 		if(printResults){
-			System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));			
+			System.out.println("Training accuracy: " + pf.format(tracc) + "; Testing accuracy: " + pf.format(teacc));			
 		}
 		
 		if(Math.abs(tracc - teacc) > .05){
 			System.err.println("Accuracy differences shouldn't be greater than 5% between training and testing: "
-					+ df.format(tracc) + "; " + df.format(teacc));
+					+ pf.format(tracc) + "; " + pf.format(teacc));
 			return false;
 		}
 		
@@ -782,12 +776,12 @@ public class Perceptrons {
 		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + pf.format(teacc));
 		
 		if(conMtrx[TN] + conMtrx[FN] > 0){
 			System.err.println("Nothing should be classified as negative with such a low threshold" +
 					"TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + pf.format(teacc));
 			return false;
 		}
 		
@@ -801,12 +795,12 @@ public class Perceptrons {
 		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + pf.format(teacc));
 		
 		if(conMtrx[TP] + conMtrx[FP] > 0){
 			System.err.println("Nothing should be classified as positive with such a high threshold:" +
 					"TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
+					+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + pf.format(teacc));
 			return false;
 		}
 		
