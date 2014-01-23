@@ -26,6 +26,7 @@ public class Perceptrons {
 	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
+	private static int maxSgn = 0;
 	private static int numEpochs = 0;
 	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
 	
@@ -35,9 +36,9 @@ public class Perceptrons {
 	 * @param testCase: char testing against
 	 * @param target: char seeking
 	 */
-	public static void extractData(char testCase, char target){
-		testCase = Character.toUpperCase(testCase);
+	public static void extractData(char target, char testCase){
 		target = Character.toUpperCase(target);
+		testCase = Character.toUpperCase(testCase);
 		
 		int dataSet = TRAIN;
 		
@@ -134,6 +135,8 @@ public class Perceptrons {
 				sgn += (testWeights[i] * Double.parseDouble(testInstance[i]));
 		}
 		
+		if(Math.abs(sgn) > maxSgn) maxSgn = (int) Math.ceil(Math.abs(sgn));
+		
 		return sgn;
 	}
 	
@@ -161,7 +164,7 @@ public class Perceptrons {
 		for(int i = 0; i < trainData.size(); i++){
 			double sgn = processInstance(TRAIN, i, null, null);
 			
-			int result, tar;
+			int tar;
 			if(trainData.get(i)[0].charAt(0) == target) tar = 1;
 			else tar = -1;
 
@@ -190,7 +193,7 @@ public class Perceptrons {
 	 * Process epoch and calculate accuracy
 	 * Stop once weights converge
 	 * @param target: character sought
-	 * @param convThresh: theshold past which to stop processing epochs
+	 * @param convThresh: threshold past which to stop processing epochs
 	 * @param test: used only for unit testing
 	 * @return: returns the final accuracy
 	 */
@@ -222,9 +225,8 @@ public class Perceptrons {
 	
 	/**
 	 * Test current perceptron against test data set
-	 * Returns current accuracy
+	 * Builds array of test scores and true classes
 	 * @param target: character sought
-	 * @return: returns an array representing the the scores and true classes
 	 */
 	public static void testData(char target){
 		//process each testing instance
@@ -244,7 +246,6 @@ public class Perceptrons {
 	/**
 	 * Calculates the current confusion matrix
 	 * based on scores, actuals, and a provided threshold
-	 * @param testScores: test data scores and true classes
 	 * @param cthresh: threshold against which to classify
 	 * @return: returns the confusion matrix
 	 */
@@ -263,25 +264,44 @@ public class Perceptrons {
 				else conMtrx[TN]++;
 			}
 		}
+		
 		return conMtrx;
 	}
 	
+	
+	/**** toString methods ****/
+	
+	/**
+ 	 * Converts confusion matrix values into a string value
+	 * @param conMtrx: confusion matrix to convert
+	 * @return: returns string representation of matrix
+	 */
 	public static String conMtrxToString(int[] conMtrx){
 		//print confusion matrix
 		return "TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN];
 	}
 	
+	/**
+	 * Converts accuracy value into a string
+	 * @param conMtrx: confusion matrix across which to calculate accuracy
+	 * @return: returns the string representation of accuracy
+	 */
 	public static String accToString(int[] conMtrx){
-		DecimalFormat df = new DecimalFormat("#.##");
+		DecimalFormat df = new DecimalFormat("#.####%");
 		
 		//print accuracy
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		return "Accuracy: " + df.format(teacc);
 	}
 	
+	/**
+	 * Converts precision and recall values into a string value
+	 * @param conMtrx: confusion matrix across which to calculate the precision and recall
+	 * @return: returns the string representation of precision and recall
+	 */
 	public static String preRecToString(int[] conMtrx){
-		DecimalFormat df = new DecimalFormat("#.##");
+		DecimalFormat df = new DecimalFormat("#.####%");
 		
 		//print precision and recall
 		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
@@ -289,12 +309,23 @@ public class Perceptrons {
 		return "Precision: " + df.format(precision) + "; Recall: " + df.format(recall);		
 	}
 	
+	
+	/**** Printing methods ****/
+	
+	/**
+	 * Prints the ROC data to build curves
+	 * Uses maximum sgn value encountered during training to determine boundaries
+	 * @param slices: number of plot points to calculate
+	 */
 	public static void printROCData(int slices){
 		DecimalFormat df = new DecimalFormat("#.####%");
+		double max = (maxSgn + 1);
+		double min = max * -1;
+		double interval = max * 2 / slices;
 		
-		//for ROC curve
-		for(double i = -16; i <= 16; i += (32/slices)){
-			System.out.print("(" + i + "):\t");
+		//calculate all points of the ROC curve
+		for(double i = min; i <= max; i += interval){
+			System.out.print("(" + i + "): ");
 			int[] conMtrx = calcConfusionMatrix(i);
 			System.out.print(conMtrxToString(conMtrx) + " - ");
 			
@@ -302,41 +333,57 @@ public class Perceptrons {
 			double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
 			double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
 			System.out.print(accToString(conMtrx) + "; TPR: " + df.format(TPR) + "; FPR: " + df.format(FPR) + "\n");
+			if(TPR + FPR == 0) break;
 		}
 	}
-	
-	public static void printResults(int slices){
+
+	/**
+	 * Prints results from the test data
+	 * @param target: target character
+	 * @param testCase: character testing against
+	 */
+	public static void printResults(char target, char testCase){
 		//print test data
-		System.out.println("Epochs: " + numEpochs);
+		System.out.println(target + " vs. " + testCase + "(" + numEpochs + " epochs)");
 		int[] baseConMtrx = calcConfusionMatrix(0);
 		System.out.println(conMtrxToString(baseConMtrx));
 		System.out.println(accToString(baseConMtrx) + "; " + preRecToString(baseConMtrx) + "\n");
-		
-		//print ROC curve data
-		printROCData(slices);
 	}
 	
+	
+	/**** Main ****/
+	
 	public static void main(String args[]){
-		boolean testmode = false;
+		boolean testmode = true;
 		double wConvrgThresh = 0.01;
 		int numROCSlices = 32;
+		char target = 'A';
+		char testCase = 'B';
 		
 		if(testmode){
 			if(!runUnitTests()) System.exit(0);
 		}
 		
 		else{
-			extractData('A', 'B');
+			extractData(target, testCase);
 			scaleFeatures(null);
 			initializeWeights();
-			cycleEpochs('A', wConvrgThresh, false);
-			testData('A');
-			printResults(numROCSlices);
+			cycleEpochs(target, wConvrgThresh, false);
+			testData(target);
+			printResults(target, testCase);
+			
+			//print ROC curve data
+			printROCData(numROCSlices);
 		}
 	}
 	
 	
 	/**** Unit Tests ****/
+	
+	/**
+	 * Unit test driver
+	 * @return: returns success or failure of tests
+	 */
 	public static boolean runUnitTests(){
 		if(!testExtractData(false)) return false;
 		if(!testScaleFeatures(false)) return false;
@@ -378,8 +425,14 @@ public class Perceptrons {
 	public static void clearData(){
 		trainData.clear();
 		testData.clear();
+		testScores.clear();
 	}
 	
+	/**
+	 * Tests extractData() method
+	 * @param printExamples
+	 * @return
+	 */
 	public static boolean testExtractData(boolean printExamples){
 		System.out.println("\nTesting data extraction...");
 		
@@ -427,6 +480,11 @@ public class Perceptrons {
 		return true;
 	}
 
+	/**
+	 * Tests scaleFeatures() method
+	 * @param printExamples
+	 * @return
+	 */
 	public static boolean testScaleFeatures(boolean printExamples){
 		System.out.println("\nTesting feature scaling...");
 		
@@ -480,6 +538,11 @@ public class Perceptrons {
 		return true;
 	}
 
+	/**
+	 * Tests initializeWeights() method
+	 * @param printWeights
+	 * @return
+	 */
 	public static boolean testInitializeWeights(boolean printWeights){
 		System.out.println("\nTesting weight initialization...");
 
@@ -528,6 +591,10 @@ public class Perceptrons {
 		return true;
 	}
 	
+	/**
+	 * Tests processInstance() method
+	 * @return
+	 */
 	public static boolean testProcessInstance(){
 		System.out.println("\nTesting instance processing...");
 		
@@ -553,6 +620,10 @@ public class Perceptrons {
 		return true;
 	}
 	
+	/**
+	 * Tests classifyInstance() method
+	 * @return
+	 */
 	public static boolean testClassifyInstance(){
 		System.out.println("\nTesting instance classification...");
 		
@@ -578,6 +649,11 @@ public class Perceptrons {
 		return true;
 	}
 
+	/**
+	 * Tests trainEpoch() method
+	 * @param printInstances
+	 * @return
+	 */
 	public static boolean testTrainEpoch(boolean printInstances){
 		System.out.println("\nTesting epoch training...");
 
@@ -591,6 +667,11 @@ public class Perceptrons {
 		return true;
 	}
 	
+	/**
+	 * Tests cycleEpochs() method
+	 * @param printAvgWts
+	 * @return
+	 */
 	public static boolean testCycleEpochs(boolean printAvgWts){
 		System.out.println("\nTesting epoch cycling...");
 
@@ -612,16 +693,31 @@ public class Perceptrons {
 		return true;
 	}
 
+	/**
+	 * Tests testData() method
+	 * @param printResults
+	 * @return
+	 */
 	public static boolean testTestData(boolean printResults){
 		System.out.println("\nTesting test data...");
+		
+		char target = 'A';
+		char testCase = 'B';
+		double convThresh = 0.02;		//weight convergence threshold
 
 		clearData();
-		extractData('A', 'B');
+		extractData(target, testCase);
 		scaleFeatures(null);
 		initializeWeights();
-		cycleEpochs('A', 0.02, false);
+		cycleEpochs(target, convThresh, false);
 		
-		testData('A');
+		testData(target);
+		
+		if(testScores.size() != testData.size()){
+			System.err.println("Cardinality of the test scores and test data set should be the same:\n"
+					+ "Data: " + testData.size() + "; Scores: " + testScores.size());
+			return false;
+		}
 		
 		if(printResults){
 			for(int i = 0; i < 10; i++){
@@ -633,23 +729,37 @@ public class Perceptrons {
 		return true;
 	}
 	
+	/**
+	 * Tests calcConfusionMatrix() method
+	 * @param printResults
+	 * @return
+	 */
 	public static boolean testCalcConfusionMatrix(boolean printResults){
 		System.out.println("\nTesting confusion matrix calculation...");
 		
+		char target = 'A';
+		char testCase = 'B';
+		double convThresh = 0.02;		//weight convergence threshold
+		
 		clearData();
-		extractData('A', 'B');
+		extractData(target, testCase);
 		scaleFeatures(null);
 		initializeWeights();
-		double tracc = cycleEpochs('A', 0.02, false);
+		double tracc = cycleEpochs(target, convThresh, false);
 		
-		testData('A');
+		testData(target);
 		
 		//Test 0 threshold
 		int[] conMtrx = calcConfusionMatrix(0);		
+		if(conMtrx[TP] + conMtrx[FP] + conMtrx[FN] + conMtrx[TN] != testScores.size()){
+			System.err.println("Total cardinality of confusion matrix should equal the size of the test scores:\n"
+					+ testScores.size() + " data rows; " + conMtrxToString(conMtrx));
+			return false;
+		}
+		
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		DecimalFormat df = new DecimalFormat("###.##%");
-		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));		
+		System.out.println(conMtrxToString(conMtrx) + "; Accuracy: " + df.format(teacc));		
 		
 		if(printResults){
 			System.out.println("Training accuracy: " + df.format(tracc) + "; Testing accuracy: " + df.format(teacc));			
@@ -664,6 +774,12 @@ public class Perceptrons {
 		
 		//Test large negative threshold
 		conMtrx = calcConfusionMatrix(-20);		
+		if(conMtrx[TP] + conMtrx[FP] + conMtrx[FN] + conMtrx[TN] != testScores.size()){
+			System.err.println("Total cardinality of confusion matrix should equal the size of the test scores:\n"
+					+ testScores.size() + " data rows; " + conMtrxToString(conMtrx));
+			return false;
+		}
+		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
@@ -677,6 +793,12 @@ public class Perceptrons {
 		
 		//Test large negative threshold
 		conMtrx = calcConfusionMatrix(20);		
+		if(conMtrx[TP] + conMtrx[FP] + conMtrx[FN] + conMtrx[TN] != testScores.size()){
+			System.err.println("Total cardinality of confusion matrix should equal the size of the test scores:\n"
+					+ testScores.size() + " data rows; " + conMtrxToString(conMtrx));
+			return false;
+		}
+		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
