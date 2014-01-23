@@ -348,30 +348,51 @@ public class Perceptrons {
 		System.out.println(accToString(baseConMtrx) + ", " + preRecToString(baseConMtrx) + "\n");
 	}
 	
+	public static void trainPerceptron(char target, char testCase, double convThresh){
+		clearData();								//make sure we're starting with a clean slate
+		extractData(target, testCase);
+		scaleFeatures(null);
+		initializeWeights();
+		cycleEpochs(target, convThresh, false);
+	}
 	
 	/**** Main ****/
 	
 	public static void main(String args[]){
 		boolean testmode = false;
-		double wConvrgThresh = 0.01;
+		double convThresh = 0.001;
 		int numROCSlices = 100;
 		char target = 'A';
-		char testCase = 'B';
+		String testCases = "BCDEFGHIJKLMNOPQRSTUVWXYZ";
 		
 		if(testmode){
 			if(!runUnitTests()) System.exit(0);
-		}
-		
+		}		
 		else{
-			extractData(target, testCase);
-			scaleFeatures(null);
-			initializeWeights();
-			cycleEpochs(target, wConvrgThresh, false);
-			testData(target);
-			printResults(target, testCase);
+			for(int i = 0; i < 10; i++){
+				char testCase = 'B';
+				double cThresh = 1.0/Math.pow(10, i);
+				
+				System.out.println("Conv threshold: " +  cThresh);
+				trainPerceptron(target, testCase, cThresh);			
+				testData(target);
+				
+				//print results and ROC curve data
+				printResults(target, testCase);
+				//printROCData(numROCSlices);				
+				//System.out.println("\n");
+			}
 			
-			//print ROC curve data
-			printROCData(numROCSlices);
+			for(int i = 0; i < testCases.length(); i++){
+				char testCase = testCases.charAt(i);
+				trainPerceptron(target, testCase, convThresh);			
+				testData(target);
+				
+				//print results and ROC curve data
+				printResults(target, testCase);
+				//printROCData(numROCSlices);				
+				//System.out.println("\n");
+			}
 		}
 	}
 	
