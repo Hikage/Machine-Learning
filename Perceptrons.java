@@ -27,6 +27,7 @@ public class Perceptrons {
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
 	private static int numEpochs = 0;
+	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
 	
 	
 	/**
@@ -225,9 +226,7 @@ public class Perceptrons {
 	 * @param target: character sought
 	 * @return: returns an array representing the the scores and true classes
 	 */
-	public static ArrayList<double[]> testData(char target){
-		ArrayList<double[]> testScores = new ArrayList<double[]>();
-		
+	public static void testData(char target){
 		//process each testing instance
 		for(int i = 0; i < testData.size(); i++){
 			double[] iResults = new double[2];
@@ -240,8 +239,6 @@ public class Perceptrons {
 			
 			testScores.add(iResults);
 		}
-		
-		return testScores;
 	}
 	
 	/**
@@ -251,7 +248,7 @@ public class Perceptrons {
 	 * @param cthresh: threshold against which to classify
 	 * @return: returns the confusion matrix
 	 */
-	public static int[] calcConfusionMatrix(ArrayList<double[]> testScores, double cthresh){
+	public static int[] calcConfusionMatrix(double cthresh){
 		int[] conMtrx = new int[4];
 		for(int i = 0; i < testScores.size(); i++){			
 			int classif = classifyInstance(testScores.get(i)[0], cthresh);
@@ -269,51 +266,73 @@ public class Perceptrons {
 		return conMtrx;
 	}
 	
-	public static void printConMtrx(int[] conMtrx){
-		DecimalFormat df = new DecimalFormat("#.##");
-		
+	public static String conMtrxToString(int[] conMtrx){
 		//print confusion matrix
-		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
-				+ conMtrx[FN] + "; TN: " + conMtrx[TN]);
+		return "TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
+				+ conMtrx[FN] + "; TN: " + conMtrx[TN];
+	}
+	
+	public static String accToString(int[] conMtrx){
+		DecimalFormat df = new DecimalFormat("#.##");
 		
 		//print accuracy
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
-		System.out.print("Accuracy: " + df.format(teacc));
+		return "Accuracy: " + df.format(teacc);
+	}
+	
+	public static String preRecToString(int[] conMtrx){
+		DecimalFormat df = new DecimalFormat("#.##");
 		
 		//print precision and recall
 		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
 		double recall = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
-		System.out.print("; Precision: " + df.format(precision) + "; Recall: " + df.format(recall));
-		
-		//print data for ROC curve
-		double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
-		double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
-		System.out.print("; TPR: " + df.format(TPR) + "; FPR: " + df.format(FPR) + "\n");
+		return "Precision: " + df.format(precision) + "; Recall: " + df.format(recall);		
 	}
 	
-	public static void printResults(ArrayList<double[]> testScores, int slices){
-		//print epochs
-		System.out.println("Epochs: " + numEpochs);
-		int[] baseConMtrx = calcConfusionMatrix(testScores, 0);
-		printConMtrx(baseConMtrx);
+	public static void printROCData(int slices){
+		DecimalFormat df = new DecimalFormat("#.####%");
 		
 		//for ROC curve
 		for(double i = -16; i <= 16; i += (32/slices)){
-			System.out.print("Thresh: " + i + "; ");
-			int[] conMtrx = calcConfusionMatrix(testScores, i);
-			printConMtrx(conMtrx);
+			System.out.print("(" + i + "):\t");
+			int[] conMtrx = calcConfusionMatrix(i);
+			System.out.print(conMtrxToString(conMtrx) + " - ");
+			
+			//print data for ROC curve
+			double TPR = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
+			double FPR = (conMtrx[FP] * 1.0) / (conMtrx[TN] + conMtrx[FP]);
+			System.out.print(accToString(conMtrx) + "; TPR: " + df.format(TPR) + "; FPR: " + df.format(FPR) + "\n");
 		}
 	}
 	
-	public static void main(String args[]){
-		//if(!runUnitTests()) System.exit(0);
+	public static void printResults(int slices){
+		//print test data
+		System.out.println("Epochs: " + numEpochs);
+		int[] baseConMtrx = calcConfusionMatrix(0);
+		System.out.println(conMtrxToString(baseConMtrx));
+		System.out.println(accToString(baseConMtrx) + "; " + preRecToString(baseConMtrx) + "\n");
 		
-		extractData('A', 'B');
-		scaleFeatures(null);
-		initializeWeights();
-		cycleEpochs('A', 0.02, false);
-		ArrayList<double[]> testScores = testData('A');
-		printResults(testScores, 32);
+		//print ROC curve data
+		printROCData(slices);
+	}
+	
+	public static void main(String args[]){
+		boolean testmode = false;
+		double wConvrgThresh = 0.01;
+		int numROCSlices = 32;
+		
+		if(testmode){
+			if(!runUnitTests()) System.exit(0);
+		}
+		
+		else{
+			extractData('A', 'B');
+			scaleFeatures(null);
+			initializeWeights();
+			cycleEpochs('A', wConvrgThresh, false);
+			testData('A');
+			printResults(numROCSlices);
+		}
 	}
 	
 	
@@ -602,7 +621,7 @@ public class Perceptrons {
 		initializeWeights();
 		cycleEpochs('A', 0.02, false);
 		
-		ArrayList<double[]> testScores = testData('A');
+		testData('A');
 		
 		if(printResults){
 			for(int i = 0; i < 10; i++){
@@ -623,10 +642,10 @@ public class Perceptrons {
 		initializeWeights();
 		double tracc = cycleEpochs('A', 0.02, false);
 		
-		ArrayList<double[]> testScores = testData('A');
+		testData('A');
 		
 		//Test 0 threshold
-		int[] conMtrx = calcConfusionMatrix(testScores, 0);		
+		int[] conMtrx = calcConfusionMatrix(0);		
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		DecimalFormat df = new DecimalFormat("###.##%");
 		System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
@@ -644,7 +663,7 @@ public class Perceptrons {
 		
 		
 		//Test large negative threshold
-		conMtrx = calcConfusionMatrix(testScores, -20);		
+		conMtrx = calcConfusionMatrix(-20);		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
@@ -657,7 +676,7 @@ public class Perceptrons {
 		}
 		
 		//Test large negative threshold
-		conMtrx = calcConfusionMatrix(testScores, 20);		
+		conMtrx = calcConfusionMatrix(20);		
 		teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		if(printResults) System.out.println("TP: " + conMtrx[TP] + "; FP: " + conMtrx[FP] + "; FN: "
 				+ conMtrx[FN] + "; TN: " + conMtrx[TN] + "; Accuracy: " + df.format(teacc));
