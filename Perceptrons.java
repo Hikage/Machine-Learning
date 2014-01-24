@@ -18,8 +18,6 @@ import java.util.Random;
 
 public class Perceptrons {
 
-	private static final String inputFile = "src/hw1Perceptrons/letter-recognition.data";
-	private static final double lrate = 0.2;
 	private static final int bias = 1;
 	private static final int TRAIN = 0, TEST = 1;
 	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
@@ -38,7 +36,7 @@ public class Perceptrons {
 	 * @param testCase: char testing against
 	 * @param target: char seeking
 	 */
-	public static void extractData(char target, char testCase){
+	public static void extractData(String inputFile, char target, char testCase){
 		target = Character.toUpperCase(target);
 		testCase = Character.toUpperCase(testCase);
 		
@@ -160,7 +158,7 @@ public class Perceptrons {
 	 * @param test: used for unit test printing
 	 * @return: accuracy value of epoch
 	 */
-	public static double trainEpoch(char target, boolean test){
+	public static double trainEpoch(char target, double lrate, boolean test){
 		if(test) printInstance(weights);
 		int tlAcc = 0;
 		for(int i = 0; i < trainData.size(); i++){
@@ -199,13 +197,13 @@ public class Perceptrons {
 	 * @param test: used only for unit testing
 	 * @return: returns the final accuracy
 	 */
-	public static double cycleEpochs(char target, double convThresh, boolean test){
+	public static double cycleEpochs(char target, double lrate, double convThresh, boolean test){
 		double avgDiff = 0;
 		double acc = 0.0;
 		numEpochs = 0;
 		do{
 			double[] prevWeights = weights.clone();
-			acc = trainEpoch(target, false);
+			acc = trainEpoch(target, lrate, false);
 			//calculate weight difference
 			double[] wDiff = new double[weights.length];
 			for(int i = 0; i < wDiff.length; i++){
@@ -219,6 +217,8 @@ public class Perceptrons {
 			if(test){
 				System.out.println(df.format(avgDiff) + "; " + df.format(acc));
 			}
+			
+			if(numEpochs >= 100) break;				//cap to prevent infinite looping
 		}while (Math.abs(avgDiff) >= convThresh);
 		
 		return acc;
@@ -348,44 +348,62 @@ public class Perceptrons {
 		System.out.println(accToString(baseConMtrx) + ", " + preRecToString(baseConMtrx) + "\n");
 	}
 	
-	public static void trainPerceptron(char target, char testCase, double convThresh){
+	/**
+	 * Calls each appropriate method to train the perceptron
+	 * @param target: character sought
+	 * @param testCase: character testing against
+	 * @param convThresh: weight convergence threshold
+	 */
+	public static void trainPerceptron(String inputFile, char target, char testCase, double lrate, double convThresh){
 		clearData();								//make sure we're starting with a clean slate
-		extractData(target, testCase);
+		extractData(inputFile, target, testCase);
 		scaleFeatures(null);
 		initializeWeights();
-		cycleEpochs(target, convThresh, false);
+		cycleEpochs(target, lrate, convThresh, false);
 	}
+	
+	/**
+	 * Used to test different weight convergence thresholds
+	 * @param target: character sought
+	 */
+	public static void testConvThresholds(String inputFile, char target, double lrate){
+		System.out.println("Testing various weight convergence thresholds...");
+		for(int i = 0; i < 10; i++){
+			char testCase = 'B';
+			double cThresh = 1.0/Math.pow(10, i);
+			
+			System.out.println("Conv threshold: " +  cThresh);
+			trainPerceptron(inputFile, target, testCase, lrate, cThresh);			
+			testData(target);
+			
+			//print results
+			printResults(target, testCase);
+		}
+	}
+	
 	
 	/**** Main ****/
 	
 	public static void main(String args[]){
-		boolean testmode = false;
-		double convThresh = 0.001;
-		int numROCSlices = 100;
+		boolean testmode = true;
+		
+		String inputFile = "src/hw1Perceptrons/letter-recognition.data";
+		double lrate = 0.2;
+		double convThresh = 0.000001;
+		
 		char target = 'A';
 		String testCases = "BCDEFGHIJKLMNOPQRSTUVWXYZ";
 		
+		int numROCSlices = 100;
+		
 		if(testmode){
-			if(!runUnitTests()) System.exit(0);
+			if(!runUnitTests(inputFile, lrate)) System.exit(0);
+			testConvThresholds(inputFile, target, lrate);				//optimal: 0.0000001
 		}		
-		else{
-			for(int i = 0; i < 10; i++){
-				char testCase = 'B';
-				double cThresh = 1.0/Math.pow(10, i);
-				
-				System.out.println("Conv threshold: " +  cThresh);
-				trainPerceptron(target, testCase, cThresh);			
-				testData(target);
-				
-				//print results and ROC curve data
-				printResults(target, testCase);
-				//printROCData(numROCSlices);				
-				//System.out.println("\n");
-			}
-			
+		else{			
 			for(int i = 0; i < testCases.length(); i++){
 				char testCase = testCases.charAt(i);
-				trainPerceptron(target, testCase, convThresh);			
+				trainPerceptron(inputFile, target, testCase, lrate, convThresh);			
 				testData(target);
 				
 				//print results and ROC curve data
@@ -403,16 +421,18 @@ public class Perceptrons {
 	 * Unit test driver
 	 * @return: returns success or failure of tests
 	 */
-	public static boolean runUnitTests(){
-		if(!testExtractData(false)) return false;
+	public static boolean runUnitTests(String inputFile, double lrate){
+		if(!testExtractData(inputFile, false)) return false;
 		if(!testScaleFeatures(false)) return false;
 		if(!testInitializeWeights(false)) return false;
 		if(!testProcessInstance()) return false;
 		if(!testClassifyInstance()) return false;
-		if(!testTrainEpoch(false)) return false;
-		if(!testCycleEpochs(false)) return false;
-		if(!testTestData(false)) return false;
-		if(!testCalcConfusionMatrix(false)) return false;
+		if(!testTrainEpoch(inputFile, lrate, false)) return false;
+		if(!testCycleEpochs(inputFile, lrate, false)) return false;
+		if(!testTestData(inputFile, lrate, false)) return false;
+		if(!testCalcConfusionMatrix(inputFile, lrate, false)) return false;
+		
+		System.out.println("\nAll unit tests pass! :)\n");
 		return true;
 	}
 	
@@ -450,10 +470,10 @@ public class Perceptrons {
 	 * @param printExamples
 	 * @return
 	 */
-	public static boolean testExtractData(boolean printExamples){
+	public static boolean testExtractData(String inputFile, boolean printExamples){
 		System.out.println("\nTesting data extraction...");
 		
-		extractData('B', 'A');
+		extractData(inputFile, 'B', 'A');
 		
 		if(printExamples){
 			System.out.println("\nSample Training Data:");
@@ -670,14 +690,14 @@ public class Perceptrons {
 	 * @param printInstances
 	 * @return
 	 */
-	public static boolean testTrainEpoch(boolean printInstances){
+	public static boolean testTrainEpoch(String inputFile, double lrate, boolean printInstances){
 		System.out.println("\nTesting epoch training...");
 
 		clearData();
-		extractData('A', 'A');
+		extractData(inputFile, 'A', 'A');
 		scaleFeatures(null);
 		initializeWeights();
-		trainEpoch('A', printInstances);
+		trainEpoch('A', lrate, printInstances);
 		
 		System.out.println("Epoch training tests pass! :)");
 		return true;
@@ -688,14 +708,14 @@ public class Perceptrons {
 	 * @param printAvgWts
 	 * @return
 	 */
-	public static boolean testCycleEpochs(boolean printAvgWts){
+	public static boolean testCycleEpochs(String inputFile, double lrate, boolean printAvgWts){
 		System.out.println("\nTesting epoch cycling...");
 
 		clearData();
-		extractData('A', 'B');
+		extractData(inputFile, 'A', 'B');
 		scaleFeatures(null);
 		initializeWeights();
-		double acc = cycleEpochs('A', 0.02, printAvgWts);
+		double acc = cycleEpochs('A', lrate, 0.02, printAvgWts);
 		if(acc < .5){
 			System.err.println("Accuracy shouldn't be this low after full epoch cycling: " + acc);
 			return false;
@@ -714,7 +734,7 @@ public class Perceptrons {
 	 * @param printResults
 	 * @return
 	 */
-	public static boolean testTestData(boolean printResults){
+	public static boolean testTestData(String inputFile, double lrate, boolean printResults){
 		System.out.println("\nTesting test data...");
 		
 		char target = 'A';
@@ -722,10 +742,10 @@ public class Perceptrons {
 		double convThresh = 0.02;		//weight convergence threshold
 
 		clearData();
-		extractData(target, testCase);
+		extractData(inputFile, target, testCase);
 		scaleFeatures(null);
 		initializeWeights();
-		cycleEpochs(target, convThresh, false);
+		cycleEpochs(target, lrate, convThresh, false);
 		
 		testData(target);
 		
@@ -750,7 +770,7 @@ public class Perceptrons {
 	 * @param printResults
 	 * @return
 	 */
-	public static boolean testCalcConfusionMatrix(boolean printResults){
+	public static boolean testCalcConfusionMatrix(String inputFile, double lrate, boolean printResults){
 		System.out.println("\nTesting confusion matrix calculation...");
 		
 		char target = 'A';
@@ -758,10 +778,10 @@ public class Perceptrons {
 		double convThresh = 0.02;		//weight convergence threshold
 		
 		clearData();
-		extractData(target, testCase);
+		extractData(inputFile, target, testCase);
 		scaleFeatures(null);
 		initializeWeights();
-		double tracc = cycleEpochs(target, convThresh, false);
+		double tracc = cycleEpochs(target, lrate, convThresh, false);
 		
 		testData(target);
 		
