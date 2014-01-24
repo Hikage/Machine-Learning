@@ -218,7 +218,7 @@ public class Perceptrons {
 				System.out.println(df.format(avgDiff) + "; " + df.format(acc));
 			}
 			
-			if(numEpochs >= 100) break;				//cap to prevent infinite looping
+			if(numEpochs >= 500) break;				//cap to prevent infinite looping
 		}while (Math.abs(avgDiff) >= convThresh);
 		
 		return acc;
@@ -380,15 +380,25 @@ public class Perceptrons {
 			printResults(target, testCase);
 		}
 	}
-	
+		
 	
 	/**** Main ****/
 	
 	public static void main(String args[]){
-		boolean testmode = true;
-		
-		String inputFile = "src/hw1Perceptrons/letter-recognition.data";
+		String inputFile = "src/hw1Perceptrons/";
 		double lrate = 0.2;
+		
+		try{
+			inputFile += args[0];
+			lrate = Double.parseDouble(args[1]);
+		}
+		catch(Exception ex){
+			System.err.println("Usage: Perceptrons.java input_file.txt learning_rate");
+			System.exit(0);
+		}
+
+		boolean testmode = false;
+		
 		double convThresh = 0.000001;
 		
 		char target = 'A';
