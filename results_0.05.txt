@@ -1,0 +1,100 @@
+A vs B (71 epochs)
+TP-399, FP-0, FN-5, TN-373
+Acc: 99.36%, Precision: 100%, Recall: 98.76%
+
+A vs C (500 epochs)
+TP-393, FP-0, FN-4, TN-365
+Acc: 99.48%, Precision: 100%, Recall: 98.99%
+
+A vs D (214 epochs)
+TP-394, FP-8, FN-3, TN-392
+Acc: 98.62%, Precision: 98.01%, Recall: 99.24%
+
+A vs E (20 epochs)
+TP-392, FP-2, FN-1, TN-383
+Acc: 99.61%, Precision: 99.49%, Recall: 99.75%
+
+A vs F (24 epochs)
+TP-396, FP-6, FN-1, TN-379
+Acc: 99.1%, Precision: 98.51%, Recall: 99.75%
+
+A vs G (157 epochs)
+TP-392, FP-2, FN-8, TN-379
+Acc: 98.72%, Precision: 99.49%, Recall: 98%
+
+A vs H (500 epochs)
+TP-392, FP-14, FN-5, TN-350
+Acc: 97.5%, Precision: 96.55%, Recall: 98.74%
+
+A vs I (500 epochs)
+TP-391, FP-2, FN-2, TN-377
+Acc: 99.48%, Precision: 99.49%, Recall: 99.49%
+
+A vs J (500 epochs)
+TP-384, FP-15, FN-4, TN-365
+Acc: 97.53%, Precision: 96.24%, Recall: 98.97%
+
+A vs K (500 epochs)
+TP-398, FP-13, FN-2, TN-351
+Acc: 98.04%, Precision: 96.84%, Recall: 99.5%
+
+A vs L (195 epochs)
+TP-399, FP-1, FN-8, TN-367
+Acc: 98.84%, Precision: 99.75%, Recall: 98.03%
+
+A vs M (500 epochs)
+TP-386, FP-29, FN-0, TN-375
+Acc: 96.33%, Precision: 93.01%, Recall: 100%
+
+A vs N (55 epochs)
+TP-394, FP-10, FN-2, TN-380
+Acc: 98.47%, Precision: 97.52%, Recall: 99.49%
+
+A vs O (217 epochs)
+TP-361, FP-0, FN-31, TN-379
+Acc: 95.98%, Precision: 100%, Recall: 92.09%
+
+A vs P (39 epochs)
+TP-392, FP-3, FN-1, TN-400
+Acc: 99.5%, Precision: 99.24%, Recall: 99.75%
+
+A vs Q (500 epochs)
+TP-395, FP-5, FN-3, TN-383
+Acc: 98.98%, Precision: 98.75%, Recall: 99.25%
+
+A vs R (213 epochs)
+TP-376, FP-3, FN-5, TN-389
+Acc: 98.97%, Precision: 99.21%, Recall: 98.69%
+
+A vs S (327 epochs)
+TP-385, FP-4, FN-2, TN-377
+Acc: 99.22%, Precision: 98.97%, Recall: 99.48%
+
+A vs T (107 epochs)
+TP-392, FP-3, FN-2, TN-395
+Acc: 99.37%, Precision: 99.24%, Recall: 99.49%
+
+A vs U (500 epochs)
+TP-385, FP-2, FN-15, TN-399
+Acc: 97.88%, Precision: 99.48%, Recall: 96.25%
+
+A vs V (164 epochs)
+TP-393, FP-15, FN-0, TN-368
+Acc: 98.07%, Precision: 96.32%, Recall: 100%
+
+A vs W (16 epochs)
+TP-399, FP-3, FN-3, TN-365
+Acc: 99.22%, Precision: 99.25%, Recall: 99.25%
+
+A vs X (20 epochs)
+TP-390, FP-1, FN-2, TN-395
+Acc: 99.62%, Precision: 99.74%, Recall: 99.49%
+
+A vs Y (500 epochs)
+TP-388, FP-7, FN-2, TN-390
+Acc: 98.86%, Precision: 98.23%, Recall: 99.49%
+
+A vs Z (61 epochs)
+TP-395, FP-2, FN-0, TN-364
+Acc: 99.74%, Precision: 99.5%, Recall: 100%
+

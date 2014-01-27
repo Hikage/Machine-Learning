@@ -18,17 +18,16 @@ import java.util.Random;
 
 public class Perceptrons {
 
+	//global variables
 	private static final int bias = 1;
 	private static final int TRAIN = 0, TEST = 1;
 	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
 	private static ArrayList<String[]> trainData = new ArrayList<String[]>();
 	private static ArrayList<String[]> testData = new ArrayList<String[]>();
 	private static double[] weights = new double[17];
-	private static int maxSgn = 0;
-	private static int numEpochs = 0;
+	private static int maxSgn = 0, numEpochs = 0;
 	private static ArrayList<double[]> testScores = new ArrayList<double[]>();
-	private static final DecimalFormat pf = new DecimalFormat("#.##%");
-	private static final DecimalFormat df = new DecimalFormat("#.##");
+	private static final DecimalFormat pf = new DecimalFormat("#.##%"), df = new DecimalFormat("#.##");		//formatting output
 	
 	
 	/**
@@ -48,17 +47,19 @@ public class Perceptrons {
 		try{
 			fr = new FileReader(inputFile);
 			buff = new BufferedReader(fr);
+			
+			//read in each line of the input file
 			String line;
 			while((line = buff.readLine()) != null && line != ""){
 				if(Character.toUpperCase(line.charAt(0)) == testCase ||
 						Character.toUpperCase(line.charAt(0)) == target){
 					
-					String[] instance = line.split(",");
+					String[] instance = line.split(",");		//parse data into an array
 					
 					//add to training or test
 					if(dataSet == TRAIN) trainData.add(instance);
 					else testData.add(instance);
-					dataSet = (dataSet + 1) % 2;
+					dataSet = (dataSet + 1) % 2;				//alternate data for training set and testing set
 				}
 			}
 		}
@@ -74,6 +75,8 @@ public class Perceptrons {
 	 */
 	public static void scaleFeatures(String[] testInstance){
 		//divide each feature value by 15
+		
+		//iterate through training data
 		for(String[] instance : trainData){
 			for(int i = 1; i < instance.length; i++){
 				if(Character.isDigit(instance[i].charAt(0)))
@@ -84,6 +87,7 @@ public class Perceptrons {
 				}
 			}
 		}
+		//iterate through test data
 		for(String[] instance : testData){
 			for(int i = 1; i < instance.length; i++){
 				if(Character.isDigit(instance[i].charAt(0)))
@@ -108,7 +112,7 @@ public class Perceptrons {
 
 		//for each of the 16 weights, generate a random double
 		for(int i = 1; i < weights.length; i++){
-			boolean rand = new Random().nextBoolean();
+			boolean rand = new Random().nextBoolean();		//randomly set positive or negative
 			int negOffset = 1;
 			if(rand) negOffset *= -1;
 			weights[i] = new Random().nextDouble() * negOffset;
@@ -131,6 +135,7 @@ public class Perceptrons {
 				sgn += (weights[i] * Double.parseDouble(trainData.get(index)[i]));
 			else if(type == TEST)
 				sgn += (weights[i] * Double.parseDouble(testData.get(index)[i]));
+			//used only for unit tests
 			else
 				sgn += (testWeights[i] * Double.parseDouble(testInstance[i]));
 		}
@@ -278,7 +283,7 @@ public class Perceptrons {
 	 * @return: returns string representation of matrix
 	 */
 	public static String conMtrxToString(int[] conMtrx){
-		//print confusion matrix
+		//confusion matrix in string form
 		return "TP-" + conMtrx[TP] + ", FP-" + conMtrx[FP] + ", FN-"
 				+ conMtrx[FN] + ", TN-" + conMtrx[TN];
 	}
@@ -289,7 +294,7 @@ public class Perceptrons {
 	 * @return: returns the string representation of accuracy
 	 */
 	public static String accToString(int[] conMtrx){		
-		//print accuracy
+		//accuracy in string form
 		double teacc = (conMtrx[TP] + conMtrx[TN]) / (testData.size()  * 1.0);
 		return "Acc: " + pf.format(teacc);
 	}
@@ -300,7 +305,7 @@ public class Perceptrons {
 	 * @return: returns the string representation of precision and recall
 	 */
 	public static String preRecToString(int[] conMtrx){		
-		//print precision and recall
+		//precision and recall in string form
 		double precision = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FP]);
 		double recall = (conMtrx[TP] * 1.0) / (conMtrx[TP] + conMtrx[FN]);
 		return "Precision: " + pf.format(precision) + ", Recall: " + pf.format(recall);		
@@ -385,11 +390,12 @@ public class Perceptrons {
 	/**** Main ****/
 	
 	public static void main(String args[]){
-		String inputFile = "src/hw1Perceptrons/";
-		double lrate = 0.2;
+		String inputFile = "";
+		double lrate = 0.2;				//learning rate
 		
+		//test input arguments
 		try{
-			inputFile += args[0];
+			inputFile = args[0];
 			lrate = Double.parseDouble(args[1]);
 		}
 		catch(Exception ex){
@@ -397,14 +403,15 @@ public class Perceptrons {
 			System.exit(0);
 		}
 
-		boolean testmode = false;
+		boolean testmode = false;		//used to run unit tests
 		
-		double convThresh = 0.000001;
+		boolean ROCdata = false;		//optional ROC data
+		double convThresh = 0.000001;	//weight convergence threshold
 		
 		char target = 'A';
 		String testCases = "BCDEFGHIJKLMNOPQRSTUVWXYZ";
 		
-		int numROCSlices = 100;
+		int numROCSlices = 100;			//number of data points for ROC curves
 		
 		if(testmode){
 			if(!runUnitTests(inputFile, lrate)) System.exit(0);
@@ -412,14 +419,16 @@ public class Perceptrons {
 		}		
 		else{			
 			for(int i = 0; i < testCases.length(); i++){
-				char testCase = testCases.charAt(i);
+				char testCase = testCases.charAt(i);		//iterate through different letters
 				trainPerceptron(inputFile, target, testCase, lrate, convThresh);			
 				testData(target);
 				
 				//print results and ROC curve data
 				printResults(target, testCase);
-				//printROCData(numROCSlices);				
-				//System.out.println("\n");
+				if(ROCdata){
+					printROCData(numROCSlices);				
+					System.out.println("\n");
+				}
 			}
 		}
 	}
@@ -483,7 +492,7 @@ public class Perceptrons {
 	public static boolean testExtractData(String inputFile, boolean printExamples){
 		System.out.println("\nTesting data extraction...");
 		
-		extractData(inputFile, 'B', 'A');
+		extractData(inputFile, 'A', 'B');
 		
 		if(printExamples){
 			System.out.println("\nSample Training Data:");
@@ -495,6 +504,7 @@ public class Perceptrons {
 			System.out.println();
 		}
 		
+		//test five random instances from each training and data sets
 		for(int i = 0; i < 5; i++){
 			int rand = new Random().nextInt(trainData.size());
 			String[] instance = trainData.get(rand);
@@ -561,6 +571,7 @@ public class Perceptrons {
 			return false;
 		}
 		
+		//test five random instances from each training and test data
 		for(int i = 0; i < 5; i++){
 			int rand1 = new Random().nextInt(trainData.size());
 			int rand2 = new Random().nextInt(trainData.get(0).length-1) + 1;
@@ -614,7 +625,7 @@ public class Perceptrons {
 			if(weights[i] < 0) pos = true;
 		}
 		
-		//Test that weights are both negative and positive
+		//Test that weights have both negative and positive
 		if(!neg){
 			System.err.println("All weights are positive");
 			return false;
@@ -707,7 +718,7 @@ public class Perceptrons {
 		extractData(inputFile, 'A', 'A');
 		scaleFeatures(null);
 		initializeWeights();
-		trainEpoch('A', lrate, printInstances);
+		trainEpoch('A', lrate, printInstances);			//only prints examples for visual (manual) verification
 		
 		System.out.println("Epoch training tests pass! :)");
 		return true;
