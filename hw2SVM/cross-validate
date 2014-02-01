@@ -14,3 +14,11 @@ do
     svm_light_osx.8.4_i7/svm_classify DogsVsCats.train$i model$i.poly out$i.poly >> valacc.poly
     echo >> valacc.poly
 done
+
+svm_light_osx.8.4_i7/svm_learn DogsVsCats.train_shuf model.lin
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.train_shuf model.lin outtr.lin >> tracc.lin
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model.lin outte.lin >> teacc.lin
+
+svm_light_osx.8.4_i7/svm_learn -t 1 DogsVsCats.train_shuf model.poly
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.train_shuf model.poly outtr.poly >> tracc.poly
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model.poly outte.poly >> teacc.poly
