@@ -1,0 +1,18 @@
+#!/bin/bash
+#perl -MList::Util -e 'print List::Util::shuffle <>' DogsVsCats.train > DogsVsCats.train_shuf
+split -l 625 DogsVsCats.train
+cat xaa xak | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train0
+cat xab xal | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train1
+cat xac xam | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train2
+cat xad xan | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train3
+cat xae xao | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train4
+cat xaf xap | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train5
+cat xag xaq | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train6
+cat xah xar | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train7
+cat xai xas | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train8
+cat xaj xat | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train9
+rm xa*
+echo "Dogs:"
+egrep -c '^1' DogsVsCats.train[0-9]
+echo "Cats:"
+egrep -c '^-1' DogsVsCats.train[0-9]
