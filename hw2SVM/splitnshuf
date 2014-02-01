@@ -1,5 +1,4 @@
 #!/bin/bash
-#perl -MList::Util -e 'print List::Util::shuffle <>' DogsVsCats.train > DogsVsCats.train_shuf
 split -l 625 DogsVsCats.train
 cat xaa xak | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train0
 cat xab xal | perl -MList::Util -e 'print List::Util::shuffle <>' > DogsVsCats.train1
@@ -16,3 +15,4 @@ echo "Dogs:"
 egrep -c '^1' DogsVsCats.train[0-9]
 echo "Cats:"
 egrep -c '^-1' DogsVsCats.train[0-9]
+perl -MList::Util -e 'print List::Util::shuffle <>' DogsVsCats.test > DogsVsCats.test_shuf
