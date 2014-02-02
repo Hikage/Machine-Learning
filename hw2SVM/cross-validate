@@ -2,23 +2,24 @@
 
 for i in {0..9}
 do
-    cat $(ls DogsVsCats.train[0-9] | grep -v $i) > cvset$i
+    cat $(ls train/DogsVsCats.train[0-9] | grep -v $i) > train/cvset$i
 
-    svm_light_osx.8.4_i7/svm_learn cvset$i model$i.lin
-    echo "Cross Validation Set: $i" >> valacc.lin
-    svm_light_osx.8.4_i7/svm_classify DogsVsCats.train$i model$i.lin out$i.lin >> valacc.lin
-    echo >> valacc.lin
+    svm_light_osx.8.4_i7/svm_learn train/cvset$i model/model$i.lin
+    echo "Cross Validation Set: $i" >> acc/valacc.lin
+    svm_light_osx.8.4_i7/svm_classify train/DogsVsCats.train$i model/model$i.lin out/out$i.lin >> acc/valacc.lin
+    echo >> acc/valacc.lin
 
-    svm_light_osx.8.4_i7/svm_learn -t 1 cvset$i model$i.poly
-    echo "Cross Validation Set: $i" >> valacc.poly
-    svm_light_osx.8.4_i7/svm_classify DogsVsCats.train$i model$i.poly out$i.poly >> valacc.poly
-    echo >> valacc.poly
+    svm_light_osx.8.4_i7/svm_learn -t 1 train/cvset$i model/model$i.poly
+    echo "Cross Validation Set: $i" >> acc/valacc.poly
+    svm_light_osx.8.4_i7/svm_classify train/DogsVsCats.train$i model/model$i.poly out/out$i.poly >> acc/valacc.poly
+    echo >> acc/valacc.poly
 done
 
-svm_light_osx.8.4_i7/svm_learn DogsVsCats.train_shuf model.lin
-svm_light_osx.8.4_i7/svm_classify DogsVsCats.train_shuf model.lin outtr.lin >> tracc.lin
-svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model.lin outte.lin >> teacc.lin
+svm_light_osx.8.4_i7/svm_learn train/DogsVsCats.train_shuf model/model.lin
+svm_light_osx.8.4_i7/svm_classify train/DogsVsCats.train_shuf model/model.lin out/outtr.lin >> acc/tracc.lin
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model/model.lin out/outte.lin >> acc/teacc.lin
 
-svm_light_osx.8.4_i7/svm_learn -t 1 DogsVsCats.train_shuf model.poly
-svm_light_osx.8.4_i7/svm_classify DogsVsCats.train_shuf model.poly outtr.poly >> tracc.poly
-svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model.poly outte.poly >> teacc.poly
+svm_light_osx.8.4_i7/svm_learn -t 1 train/DogsVsCats.train_shuf model/model.poly
+svm_light_osx.8.4_i7/svm_classify train/DogsVsCats.train_shuf model/model.poly out/outtr.poly >> acc/tracc.poly
+svm_light_osx.8.4_i7/svm_classify DogsVsCats.test_shuf model/model.poly out/outte.poly >> acc/teacc.poly
+
