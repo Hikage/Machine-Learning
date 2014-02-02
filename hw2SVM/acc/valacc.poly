@@ -1,73 +1,73 @@
-Overall Average Accuracy: 61.53%
+Overall Average Accuracy: 66.99%
 
 
 Cross Validation Set: 0
-Reading model...OK. (9575 support vectors read)
+Reading model...OK. (9501 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.51
-Accuracy on test set: 64.00% (800 correct, 450 incorrect, 1250 total)
-Precision/recall on test set: 67.06%/55.04%
+Runtime (without IO) in cpu-seconds: 3.69
+Accuracy on test set: 63.60% (795 correct, 455 incorrect, 1250 total)
+Precision/recall on test set: 66.04%/56.00%
 
 Cross Validation Set: 1
-Reading model...OK. (9586 support vectors read)
+Reading model...OK. (9516 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.36
-Accuracy on test set: 63.04% (788 correct, 462 incorrect, 1250 total)
-Precision/recall on test set: 66.27%/53.12%
+Runtime (without IO) in cpu-seconds: 3.26
+Accuracy on test set: 62.64% (783 correct, 467 incorrect, 1250 total)
+Precision/recall on test set: 64.96%/54.88%
 
 Cross Validation Set: 2
-Reading model...OK. (9546 support vectors read)
+Reading model...OK. (9479 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.31
-Accuracy on test set: 60.88% (761 correct, 489 incorrect, 1250 total)
-Precision/recall on test set: 63.88%/50.08%
+Runtime (without IO) in cpu-seconds: 3.25
+Accuracy on test set: 62.16% (777 correct, 473 incorrect, 1250 total)
+Precision/recall on test set: 64.62%/53.76%
 
 Cross Validation Set: 3
-Reading model...OK. (9552 support vectors read)
+Reading model...OK. (9482 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.73
+Runtime (without IO) in cpu-seconds: 3.63
 Accuracy on test set: 61.52% (769 correct, 481 incorrect, 1250 total)
-Precision/recall on test set: 64.69%/50.72%
+Precision/recall on test set: 63.95%/52.80%
 
 Cross Validation Set: 4
-Reading model...OK. (9503 support vectors read)
+Reading model...OK. (9439 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.71
-Accuracy on test set: 58.72% (734 correct, 516 incorrect, 1250 total)
-Precision/recall on test set: 60.58%/49.92%
+Runtime (without IO) in cpu-seconds: 3.27
+Accuracy on test set: 59.44% (743 correct, 507 incorrect, 1250 total)
+Precision/recall on test set: 60.77%/53.28%
 
 Cross Validation Set: 5
-Reading model...OK. (9541 support vectors read)
+Reading model...OK. (9475 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.76
-Accuracy on test set: 61.28% (766 correct, 484 incorrect, 1250 total)
-Precision/recall on test set: 62.98%/54.72%
+Runtime (without IO) in cpu-seconds: 3.64
+Accuracy on test set: 61.84% (773 correct, 477 incorrect, 1250 total)
+Precision/recall on test set: 63.12%/56.96%
 
 Cross Validation Set: 6
-Reading model...OK. (9535 support vectors read)
+Reading model...OK. (9472 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.61
-Accuracy on test set: 62.00% (775 correct, 475 incorrect, 1250 total)
-Precision/recall on test set: 64.82%/52.48%
+Runtime (without IO) in cpu-seconds: 3.08
+Accuracy on test set: 62.16% (777 correct, 473 incorrect, 1250 total)
+Precision/recall on test set: 64.39%/54.40%
 
 Cross Validation Set: 7
-Reading model...OK. (9527 support vectors read)
+Reading model...OK. (9452 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.49
-Accuracy on test set: 60.96% (762 correct, 488 incorrect, 1250 total)
-Precision/recall on test set: 64.12%/49.76%
+Runtime (without IO) in cpu-seconds: 3.21
+Accuracy on test set: 61.92% (774 correct, 476 incorrect, 1250 total)
+Precision/recall on test set: 64.64%/52.64%
 
 Cross Validation Set: 8
-Reading model...OK. (9546 support vectors read)
+Reading model...OK. (9479 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.56
-Accuracy on test set: 62.80% (785 correct, 465 incorrect, 1250 total)
-Precision/recall on test set: 66.13%/52.48%
+Runtime (without IO) in cpu-seconds: 3.21
+Accuracy on test set: 63.36% (792 correct, 458 incorrect, 1250 total)
+Precision/recall on test set: 65.78%/55.68%
 
 Cross Validation Set: 9
-Reading model...OK. (9520 support vectors read)
+Reading model...OK. (9449 support vectors read)
 Classifying test examples..100..200..300..400..500..600..700..800..900..1000..1100..1200..done
-Runtime (without IO) in cpu-seconds: 3.39
-Accuracy on test set: 60.08% (751 correct, 499 incorrect, 1250 total)
-Precision/recall on test set: 62.96%/48.96%
+Runtime (without IO) in cpu-seconds: 3.52
+Accuracy on test set: 60.48% (756 correct, 494 incorrect, 1250 total)
+Precision/recall on test set: 62.67%/51.84%
 
