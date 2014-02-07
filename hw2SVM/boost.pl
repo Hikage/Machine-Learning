@@ -3,21 +3,23 @@
 use strict;
 use warnings;
 
+use List::MoreUtils qw( each_array );
+
 # "Boost" Adaboost algorithm script
 # © 2014 Brianna Shade
 # CS545 - Machine Learning WI 2014
 
 my @w;                                              #global weight vector
+my @wbndry;                                         #weight boundaries for roulette
 
-# Update weight vector with ranges for roulette
+# Update weight vector boundaries for roulette
 # takes in an array of new weights
-sub updateWeights{
-    my (@newwts) = @_;
+sub updateWeightBound{
     for(my $i = 0; $i < @w; $i++){
         my $prvbndry;
         if ($i == 0) { $prvbndry = 0 }
-        else { $prvbndry = $w[$i-1] }
-        $w[$i] = $prvbndry + $newwts[$i];
+        else { $prvbndry = $wbndry[$i-1] }
+        $wbndry[$i] = $prvbndry + $w[$i];
     }
 }
 
@@ -52,9 +54,10 @@ sub run{
 
     # Initialize weight vector
     my $M = @instances;
-    @w = (0) x $M;
+    @w = (1/$M) x $M;
+    @wbndry = (0) x $M;
 #    print join(" ", @w) . "\n";
-    updateWeights((1/$M) x $M);
+    updateWeightBound();
 #    print join(" ", @w) . "\n";
 
 #    foreach my $T (0..$K-1){                                    #boosting iterations
@@ -64,24 +67,40 @@ my $T = 0;
         my $predict = "boost/$T.predictions";
         my $testpred = "boost/Test$T.predictions";
 
-        my $trainex;
-        foreach my $i (0..$M-1){
+#        my $trainex;
+#        foreach my $i (0..$M-1){
             #roulette wheel selection
-            my $r = rand();
-            $trainex = @instances[locateInstance(0, $M-1, $r)];
+#            my $r = rand();
+#            $trainex = @instances[locateInstance(0, $M-1, $r)];
 #            print join(" ", @$trainex) . "\n";
-            open(FILE, ">>$train");
-            print FILE join(" ", @$trainex);
-            print FILE "\n";
-            close(FILE);
-        }
+#            open(FILE, ">>$train");
+#            print FILE join(" ", @$trainex);
+#            print FILE "\n";
+#            close(FILE);
+#        }
 
         # SVM
-        system("svm_light_osx.8.4_i7/svm_learn $kernel $train $hypoth");            #train
-        system("svm_light_osx.8.4_i7/svm_classify $S $hypoth $predict");            #classify
+#        system("svm_light_osx.8.4_i7/svm_learn $kernel $train $hypoth");            #train
+#        system("svm_light_osx.8.4_i7/svm_classify $S $hypoth $predict");            #classify
 
-        #use $predict to determine incorrectly classified instances
-        #error$T = sum of incorrect classification weights
+        # Calculate error
+        open(FILE, "<", $predict)
+            or die "Can't open file: $!\n";
+        my @predictions = <FILE>;
+        close(FILE);
+
+        my $error = 0.0;
+        my $cmpr = each_array(@instances, @predictions, @w);
+        while ( my ($inst, $score, $wt) = $cmpr->() ) {
+            my $actclss = @$inst[0];
+            if(($actclss < 0 && $score > 0) || ($actclss > 0 && $score < 0)){
+                $error += $wt;
+#                print "new error: $error; weight: $wt; actclass: $actclss; score: $score";
+            }
+        }
+        print "error: $error\n";
+
+        # Calculate alpha
         #alpha$T = .5 * ln((1 - error$T) / error$T)
         #calculate new weight vector
     
