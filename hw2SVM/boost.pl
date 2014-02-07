@@ -11,12 +11,12 @@ my @w;                                              #global weight vector
 
 # Update weight vector
 sub updateWeights{
-    my ($wsize, $incr) = @_;
-    for(my $i = 0; $i < $wsize; $i++){
+    my (@newwts) = @_;
+    for(my $i = 0; $i < @w; $i++){
         my $prvbndry;
         if ($i == 0) { $prvbndry = 0 }
         else { $prvbndry = $w[$i-1] }
-        $w[$i] = $prvbndry + $incr;
+        $w[$i] = $prvbndry + $newwts[$i];
     }
 }
 
@@ -49,8 +49,10 @@ sub run{
 
     # Initialize weight vector
     my $M = @instances;
-    updateWeights($M, 1/$M);
-#    print join(" ", @w) . "\n";
+    @w = (0) x $M;
+    print join(" ", @w) . "\n";
+    updateWeights((1/$M) x $M);
+    print join(" ", @w) . "\n";
 
 #    foreach my $T (0..$K-1){                                    #boosting iterations
 #        my $train = "S$T";
@@ -63,7 +65,7 @@ sub run{
         #select training example based on roulette wheel
         my $r = rand();
         $trainex = @instances[locateInstance(0, $M-1, $r)];
-        print join(" ", @$trainex) . "\n";
+#        print join(" ", @$trainex) . "\n";
     #        open(FILE, ">S$i");
     #        print FILE join(" ", @trainex);
     #        close(FILE);
