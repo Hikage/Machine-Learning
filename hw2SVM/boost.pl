@@ -7,8 +7,9 @@ use warnings;
 # © 2014 Brianna Shade
 # CS545 - Machine Learning WI 2014
 
-my @w;
+my @w;                                              #global weight vector
 
+# Update weight vector
 sub updateWeights{
     my ($wsize, $incr) = @_;
     for(my $i = 0; $i < $wsize; $i++){
@@ -57,13 +58,12 @@ sub run{
 #        my $predict = "predict/$T.predictions";
 #        my $testpred = "predict/Test$T.predictions";
 
-        my @trainex;
+        my $trainex;
 #        foreach my $i (0..$M-1){
         #select training example based on roulette wheel
         my $r = rand();
-        print "r: $r";
-        my $exnum = locateInstance(0, $M-1, $r);
-        print ": $exnum ($w[$exnum-1]-$w[$exnum])\n";
+        $trainex = @instances[locateInstance(0, $M-1, $r)];
+        print join(" ", @$trainex) . "\n";
     #        open(FILE, ">S$i");
     #        print FILE join(" ", @trainex);
     #        close(FILE);
