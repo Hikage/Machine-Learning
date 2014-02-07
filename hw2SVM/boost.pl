@@ -9,7 +9,8 @@ use warnings;
 
 my @w;                                              #global weight vector
 
-# Update weight vector
+# Update weight vector with ranges for roulette
+# takes in an array of new weights
 sub updateWeights{
     my (@newwts) = @_;
     for(my $i = 0; $i < @w; $i++){
@@ -20,6 +21,7 @@ sub updateWeights{
     }
 }
 
+# Recursive binary search to locate appropriate instance bucket
 sub locateInstance{
     my($min, $max, $num) = @_;
     if($min == $max) { return $max }
@@ -32,6 +34,7 @@ sub locateInstance{
     if($num > $w[$mid]) { return locateInstance($mid, $max, $num) }
 }
 
+# Main method
 sub run{
     my $S = "train/DogsVsCats.train";               #training data
     my $test = "DogsVsCats.test";                   #test data
@@ -50,26 +53,28 @@ sub run{
     # Initialize weight vector
     my $M = @instances;
     @w = (0) x $M;
-    print join(" ", @w) . "\n";
+#    print join(" ", @w) . "\n";
     updateWeights((1/$M) x $M);
-    print join(" ", @w) . "\n";
+#    print join(" ", @w) . "\n";
 
 #    foreach my $T (0..$K-1){                                    #boosting iterations
-#        my $train = "S$T";
-#        my $hypoth = "h$T";
-#        my $predict = "predict/$T.predictions";
-#        my $testpred = "predict/Test$T.predictions";
+my $T = 0;
+        my $train = "S$T";
+        my $hypoth = "h$T";
+        my $predict = "predict/$T.predictions";
+        my $testpred = "predict/Test$T.predictions";
 
         my $trainex;
-#        foreach my $i (0..$M-1){
-        #select training example based on roulette wheel
-        my $r = rand();
-        $trainex = @instances[locateInstance(0, $M-1, $r)];
-#        print join(" ", @$trainex) . "\n";
-    #        open(FILE, ">S$i");
-    #        print FILE join(" ", @trainex);
-    #        close(FILE);
-#        }
+        foreach my $i (0..$M-1){
+            #roulette wheel selection
+            my $r = rand();
+            $trainex = @instances[locateInstance(0, $M-1, $r)];
+#            print join(" ", @$trainex) . "\n";
+            open(FILE, ">>S$T");
+            print FILE join(" ", @$trainex);
+            print FILE "\n";
+            close(FILE);
+        }
 
     # SVM
     #    system("svm_learn $kernel $train $model");          #train
