@@ -59,10 +59,10 @@ sub run{
 
 #    foreach my $T (0..$K-1){                                    #boosting iterations
 my $T = 0;
-        my $train = "S$T";
-        my $hypoth = "h$T";
-        my $predict = "predict/$T.predictions";
-        my $testpred = "predict/Test$T.predictions";
+        my $train = "boost/S$T";
+        my $hypoth = "boost/h$T";
+        my $predict = "boost/$T.predictions";
+        my $testpred = "boost/Test$T.predictions";
 
         my $trainex;
         foreach my $i (0..$M-1){
@@ -70,15 +70,15 @@ my $T = 0;
             my $r = rand();
             $trainex = @instances[locateInstance(0, $M-1, $r)];
 #            print join(" ", @$trainex) . "\n";
-            open(FILE, ">>S$T");
+            open(FILE, ">>$train");
             print FILE join(" ", @$trainex);
             print FILE "\n";
             close(FILE);
         }
 
-    # SVM
-    #    system("svm_learn $kernel $train $model");          #train
-    #    system("svm_classify $S $hypoth $predict");         #classify
+        # SVM
+        system("svm_light_osx.8.4_i7/svm_learn $kernel $train $hypoth");            #train
+        system("svm_light_osx.8.4_i7/svm_classify $S $hypoth $predict");            #classify
 
         #use $predict to determine incorrectly classified instances
         #error$T = sum of incorrect classification weights
