@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use List::MoreUtils qw( each_array );
+use Math::Complex;
 
 # "Boost" Adaboost algorithm script
 # © 2014 Brianna Shade
@@ -101,7 +102,8 @@ my $T = 0;
         print "error: $error\n";
 
         # Calculate alpha
-        #alpha$T = .5 * ln((1 - error$T) / error$T)
+        my $alpha = .5 * log((1 - $error) / $error);
+        print "alpha: $alpha\n";
         #calculate new weight vector
     
     #    system("svm_classify $test $hypoth $testpred");
