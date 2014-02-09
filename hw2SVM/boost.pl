@@ -26,21 +26,22 @@ sub updateWeightBound{
 # Recursive binary search to locate appropriate instance bucket
 sub locateInstance{
     my($min, $max, $num) = @_;
+#    print "min: $min, max: $max, num: $num\n";
     if($min == $max) { return $max }
     if($max - $min < 2){
         if($num > $min) { return $min }
         else { return $max}
     }
     my $mid = int((($max - $min) / 2) + $min);
-    if($num <= $w[$mid]) { return locateInstance($min, $mid, $num) }
-    if($num > $w[$mid]) { return locateInstance($mid, $max, $num) }
+    if($num <= $wbndry[$mid]) { return locateInstance($min, $mid, $num) }
+    if($num > $wbndry[$mid]) { return locateInstance($mid, $max, $num) }
 }
 
 # Main method
 sub run{
-    my $S = "train/DogsVsCats.train";               #training data
-    my $test = "DogsVsCats.test";                   #test data
-    my $K = 50;                                     #boosting iterations
+    my $S = "train/DogsVsCats.train_shuf";          #training data
+    my $test = "DogsVsCats.test_shuf";              #test data
+    my $K = 10;                                     #boosting iterations
     my $kernel = "-t 1 -d 5";                       #kernel parameters
 
     # Read file into array of arrays
@@ -62,6 +63,7 @@ sub run{
     my @Hx = (0) x $M;                              #ensemble classifier array (for all instances)
 
     foreach my $T (0..$K-1){                                    #boosting iterations
+#        my $T = 0;
         my $train = "boost/S$T";
         my $hypoth = "boost/h$T";
         my $predict = "boost/$T.predictions";
