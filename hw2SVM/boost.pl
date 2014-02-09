@@ -60,6 +60,8 @@ sub run{
     updateWeightBound();
 #    print join(" ", @w) . "\n";
 
+    my @Hx = (0) x $M;                              #ensemble classifier array (for all instances)
+
 #    foreach my $T (0..$K-1){                                    #boosting iterations
 my $T = 0;
         my $train = "boost/S$T";
@@ -123,9 +125,18 @@ my $T = 0;
 #        foreach(@w){ print "$_\n"; }
         updateWeightBound();
     
-    #    system("svm_classify $test $hypoth $testpred");
+        system("svm_light_osx.8.4_i7/svm_classify $test $hypoth $testpred");
         #extract sign of first row in $testpred (+ or -)
-        #compute H(x) for every x in the test set sum(alpha$T * $hypoth)
+        open(FILE, "<", $testpred)
+            or die "Can't open file: $!\n";
+        my @testpredictions = <FILE>;
+        close(FILE);
+        #compute H(x) for every x in the test set sum(alpha$T * $testpred)
+        foreach(0..@Hx-1){
+            my $tpclss = ($testpredictions[$_] < 0) ? -1 : 1;
+            $Hx[$_] += ($alpha * $tpclss);
+            print "a: $alpha, cl: $tpclss; Hx: $Hx[$_]\n";
+        }
 #    }
 }
 
