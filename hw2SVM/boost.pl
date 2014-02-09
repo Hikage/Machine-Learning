@@ -41,7 +41,7 @@ sub locateInstance{
 sub run{
     my $S = "train/DogsVsCats.train_shuf";          #training data
     my $test = "DogsVsCats.test_shuf";              #test data
-    my $K = 10;                                     #boosting iterations
+    my $K = 20;                                     #boosting iterations
     my $kernel = "-t 1 -d 5";                       #kernel parameters
 
     # Read file into array of arrays
