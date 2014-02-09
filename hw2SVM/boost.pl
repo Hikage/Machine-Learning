@@ -40,7 +40,7 @@ sub locateInstance{
 sub run{
     my $S = "train/DogsVsCats.train";               #training data
     my $test = "DogsVsCats.test";                   #test data
-    my $K = 10;                                     #boosting iterations
+    my $K = 50;                                     #boosting iterations
     my $kernel = "-t 1 -d 5";                       #kernel parameters
 
     # Read file into array of arrays
@@ -147,7 +147,7 @@ sub run{
     
     foreach(0..@Hx-1){
         $Hx[$_] = ($Hx[$_] < 0) ? -1 : 1;
-        open(FILE, ">>results.out");
+        open(FILE, ">>boost/results.out");
             print FILE "tinst: $tinsts[$_][0]; Hx: $Hx[$_]\n";
         close(FILE);
     
