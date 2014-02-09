@@ -44,12 +44,11 @@ sub run{
     my $kernel = "-t 1 -d 5";                       #kernel parameters
 
     # Read file into array of arrays
-    open(FILE, "<", $S)
-      or die "Can't open file: $!\n";
-    my @instances;
-    while (my $instance = <FILE>){
-        push(@instances, [split(' ', $instance)]);
-    }
+    open(FILE, "<", $S) or die "Can't open file: $!\n";
+        my @instances;
+        while (my $instance = <FILE>){
+            push(@instances, [split(' ', $instance)]);
+        }
     close(FILE);
 
     # Initialize weight vector
@@ -62,33 +61,31 @@ sub run{
 
     my @Hx = (0) x $M;                              #ensemble classifier array (for all instances)
 
-#    foreach my $T (0..$K-1){                                    #boosting iterations
-my $T = 0;
+    foreach my $T (0..$K-1){                                    #boosting iterations
         my $train = "boost/S$T";
         my $hypoth = "boost/h$T";
         my $predict = "boost/$T.predictions";
         my $testpred = "boost/Test$T.predictions";
 
-#        my $trainex;
-#        foreach my $i (0..$M-1){
+        my $trainex;
+        foreach(0..$M-1){
             #roulette wheel selection
-#            my $r = rand();
-#            $trainex = @instances[locateInstance(0, $M-1, $r)];
+            my $r = rand();
+            $trainex = @instances[locateInstance(0, $M-1, $r)];
 #            print join(" ", @$trainex) . "\n";
-#            open(FILE, ">>$train");
-#            print FILE join(" ", @$trainex);
-#            print FILE "\n";
-#            close(FILE);
-#        }
+            open(FILE, ">>$train");
+                print FILE join(" ", @$trainex);
+                print FILE "\n";
+            close(FILE);
+        }
 
         # SVM
-#        system("svm_light_osx.8.4_i7/svm_learn $kernel $train $hypoth");            #train
-#        system("svm_light_osx.8.4_i7/svm_classify $S $hypoth $predict");            #classify
+        system("svm_light_osx.8.4_i7/svm_learn $kernel $train $hypoth");            #train
+        system("svm_light_osx.8.4_i7/svm_classify $S $hypoth $predict");            #classify
 
         # Calculate error
-        open(FILE, "<", $predict)
-            or die "Can't open file: $!\n";
-        my @predictions = <FILE>;
+        open(FILE, "<", $predict) or die "Can't open file: $!\n";
+            my @predictions = <FILE>;
         close(FILE);
 
         my @actclasses;
@@ -105,11 +102,11 @@ my $T = 0;
 
             if($actclss != $pclss){ $error += $wt; }
         }
-        print "error: $error\n";
+#        print "error: $error\n";
 
         # Calculate alpha
         my $alpha = .5 * log((1 - $error) / $error);
-        print "alpha: $alpha\n";
+#        print "alpha: $alpha\n";
 
         # Calculate new weight vector
         my $Z = 0;
@@ -119,7 +116,7 @@ my $T = 0;
 #            print "a: $actclss, p: $pclss; what: $wt\n";
         }
 #        foreach(@w){ print "$_\n"; }
-        print "Z: $Z\n";
+#        print "Z: $Z\n";
 
         foreach(@w){ $_ /= $Z; }
 #        foreach(@w){ print "$_\n"; }
@@ -127,17 +124,38 @@ my $T = 0;
     
         system("svm_light_osx.8.4_i7/svm_classify $test $hypoth $testpred");
         #extract sign of first row in $testpred (+ or -)
-        open(FILE, "<", $testpred)
-            or die "Can't open file: $!\n";
-        my @testpredictions = <FILE>;
+        open(FILE, "<", $testpred) or die "Can't open file: $!\n";
+            my @testpredictions = <FILE>;
         close(FILE);
-        #compute H(x) for every x in the test set sum(alpha$T * $testpred)
+
+        #compute H(x)
         foreach(0..@Hx-1){
             my $tpclss = ($testpredictions[$_] < 0) ? -1 : 1;
             $Hx[$_] += ($alpha * $tpclss);
-            print "a: $alpha, cl: $tpclss; Hx: $Hx[$_]\n";
+#            print "a: $alpha, cl: $tpclss; Hx: $Hx[$_]\n";
         }
-#    }
+    }
+
+    open(FILE, "<", $test) or die "Can't open file: $!\n";
+        my @tinsts;
+        while (my $tinst = <FILE>){
+            push(@tinsts, [split(' ', $tinst)]);
+        }
+    close(FILE);
+
+    my $acc = 0;
+    
+    foreach(0..@Hx-1){
+        $Hx[$_] = ($Hx[$_] < 0) ? -1 : 1;
+        open(FILE, ">>results.out");
+            print FILE "tinst: $tinsts[$_][0]; Hx: $Hx[$_]\n";
+        close(FILE);
+    
+        $acc++ if($Hx[$_] == $tinsts[$_][0]);
+    }
+    
+    $acc /= $M;
+    print "Ensemble accuracy: $acc\n";
 }
 
 run();
