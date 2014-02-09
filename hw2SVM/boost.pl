@@ -16,12 +16,11 @@ my @wbndry;                                         #weight boundaries for roule
 # Update weight vector boundaries for roulette
 # takes in an array of new weights
 sub updateWeightBound{
-    for(my $i = 0; $i < @w; $i++){
-        my $prvbndry;
-        if ($i == 0) { $prvbndry = 0 }
-        else { $prvbndry = $wbndry[$i-1] }
-        $wbndry[$i] = $prvbndry + $w[$i];
+    foreach(0..@w-1){
+        my $prvbndry = ($_ == 0) ? 0 : $wbndry[$_-1];
+        $wbndry[$_] = $prvbndry + $w[$_];
     }
+#    foreach(@wbndry){ print "$_\t"; }
 }
 
 # Recursive binary search to locate appropriate instance bucket
@@ -90,21 +89,39 @@ my $T = 0;
         my @predictions = <FILE>;
         close(FILE);
 
+        my @actclasses;
+        my @pclasses;
+
         my $error = 0.0;
         my $cmpr = each_array(@instances, @predictions, @w);
-        while ( my ($inst, $score, $wt) = $cmpr->() ) {
+        while(my ($inst, $score, $wt) = $cmpr->() ) {
             my $actclss = @$inst[0];
-            if(($actclss < 0 && $score > 0) || ($actclss > 0 && $score < 0)){
-                $error += $wt;
-#                print "new error: $error; weight: $wt; actclass: $actclss; score: $score";
-            }
+            push(@actclasses, $actclss);
+
+            my $pclss = ($score < 0) ? -1 : 1;
+            push(@pclasses, $pclss);
+
+            if($actclss != $pclss){ $error += $wt; }
         }
         print "error: $error\n";
 
         # Calculate alpha
         my $alpha = .5 * log((1 - $error) / $error);
         print "alpha: $alpha\n";
-        #calculate new weight vector
+
+        # Calculate new weight vector
+        my $Z = 0;
+        foreach(0..@w-1){
+            $w[$_] *= exp($alpha * -1 * $actclasses[$_] * $pclasses[$_]);
+            $Z += $w[$_];
+#            print "a: $actclss, p: $pclss; what: $wt\n";
+        }
+#        foreach(@w){ print "$_\n"; }
+        print "Z: $Z\n";
+
+        foreach(@w){ $_ /= $Z; }
+#        foreach(@w){ print "$_\n"; }
+        updateWeightBound();
     
     #    system("svm_classify $test $hypoth $testpred");
         #extract sign of first row in $testpred (+ or -)
