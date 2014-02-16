@@ -1,2 +1,3 @@
 *.class
-Homework1.pdf
+*.pdf
+hw2SVM/boost/*
