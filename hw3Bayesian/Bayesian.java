@@ -19,7 +19,7 @@ public class Bayesian {
 	private static int[] trainCt = {376, 389, 380, 389, 387, 376, 377, 387, 380, 382};
 	private static int trainTtl = 3823;
 	private static double[] trainProb = new double[trainCt.length];
-	private static double[][][] CPtrain = new double[64][16][10];
+	private static double[][][] CPtrain = new double[64][17][10];
 	
 	private static double[] Ptest = {
 		178/1797,		//0
@@ -35,8 +35,6 @@ public class Bayesian {
 	
 	/**
 	 * Reads input file and generates training data set
-	 * @param testCase: char testing against
-	 * @param target: char seeking
 	 */
 	public static void extractData(String inputFile){		
 		FileReader fr;
@@ -51,7 +49,7 @@ public class Bayesian {
 			while((line = buff.readLine()) != null && line != ""){					
 				String[] feats = line.split(",");			//parse data into an array
 				int[] instance = new int[feats.length];
-				for(int i = 0; i < feats.length-1; i++){
+				for(int i = 0; i < feats.length; i++){
 					instance[i] = Integer.parseInt(feats[i]);
 				}
 				trainData.add(instance);					//add to training or test
@@ -65,7 +63,8 @@ public class Bayesian {
 	
 	public static void calcProbs(){
 		for(int i = 0; i < trainProb.length; i++){
-			trainProb[i] /= (double)trainTtl;
+			trainProb[i] = trainCt[i] / (double)trainTtl;
+			//System.out.println(trainProb[i]);
 		}
 	}
 	
@@ -73,12 +72,15 @@ public class Bayesian {
 		for(int[]instance : trainData){
 			for(int i = 0; i < instance.length-1; i++){
 				CPtrain[i][instance[i]][instance[instance.length-1]]++;		//increment count of [feature number][feature value][class]
+				//if(i == 0) System.out.println("["+ i + "][" + instance[i] + "][" + instance[instance.length-1] + "]");
 			}
 		}
 		for(int i = 0; i < CPtrain.length; i++){
 			for(int j = 0; j < CPtrain[0].length; j++){
 				for(int k = 0; k < CPtrain[0][0].length; k++){
-					CPtrain[i][j][k] /= trainProb[k];
+					//System.out.println(CPtrain[i][j][k] + "/" + trainProb[k] + " = " + CPtrain[i][j][k] / trainProb[k]);
+					//if(i == 0) System.out.println(j + ", " + k + ": " + CPtrain[i][j][k] + "/" + trainCt[k]);
+					CPtrain[i][j][k] /= trainCt[k];
 				}
 			}
 		}
@@ -109,23 +111,58 @@ public class Bayesian {
 	public static boolean testCalcProbs(){
 		System.out.println("Testing probability calculations...");
 		calcProbs();
+		
 		if(trainProb.length != trainCt.length){
 			System.err.println("Probabilities somehow ended up with a different size than the counts: " + 
 					trainProb.length + " (should be " + trainCt.length + ")");
 			return false;
 		}
-		if(trainProb[5] != 376/3823){
-			System.err.println("Miscalculation; should be " + 376/3823 + " (is " + trainProb[5] + ")");
+		double ttl = 0;
+		for(int i = 0; i < trainProb.length; i++){
+			if(trainProb[i] == 0){
+				System.err.println("Value at " + i + " is 0");
+				return false;
+			}
+			ttl += trainProb[i];
+		}
+		if(ttl != 1){
+			System.err.println("Total of all probabilities should be 1.0: " + ttl);
+			return false;
+		}
+		if(trainProb[5] != (double)376/3823){
+			System.err.println("Probability miscalculation; should be " + (double)376/3823 + " (is " + trainProb[5] + ")");
 			return false;
 		}
 		
-		System.out.println("Probability calculation tests pass! :)");
+		System.out.println("Probability calculation tests pass! :)\n");
+		return true;
+	}
+	
+	public static boolean testCalcCondProbs(){
+		System.out.println("Testing conditional probability calculations...");
+		calcCondProbs();
+		
+		for(int i = 0; i < trainCt.length; i++){
+			if(CPtrain[0][0][i] == 0){
+				System.err.println("The first feature should have more than 0 counted 0s");
+				return false;
+			}
+			if(CPtrain[0][0][i] != 1){
+				System.err.println("Conditional probability miscalculation with " + i + "s; the first feature " +
+						"for all data is 0, so this value should be 1.0: " + CPtrain[0][0][i]);
+				return false;
+			}
+		}
+		
+		System.out.println("Conditional probability calculation tests pass! :)\n");
 		return true;
 	}
 	
 	public static boolean runTests(boolean verbose, String trainFile){
 		clearData();
+		extractData(trainFile);
 		if(!testCalcProbs()) return false;
+		if(!testCalcCondProbs()) return false;
 		return true;
 	}
 
