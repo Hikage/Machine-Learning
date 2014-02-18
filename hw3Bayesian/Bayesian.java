@@ -8,19 +8,125 @@
  */
 package hw3Bayesian;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class Bayesian {
 
+	private static ArrayList<int[]> trainData = new ArrayList<int[]>();
+	private static int[] trainCt = {376, 389, 380, 389, 387, 376, 377, 387, 380, 382};
+	private static int trainTtl = 3823;
+	private static double[] trainProb = new double[trainCt.length];
+	private static double[][][] CPtrain = new double[64][16][10];
+	
+	private static double[] Ptest = {
+		178/1797,		//0
+		182/1797,		//1
+		177/1797,		//2
+		183/1797,		//3
+		181/1797,		//4
+		182/1797,		//5
+		181/1797,		//6
+		179/1797,		//7
+		174/1797,		//8
+		180/1797};		//9
+	
+	/**
+	 * Reads input file and generates training data set
+	 * @param testCase: char testing against
+	 * @param target: char seeking
+	 */
+	public static void extractData(String inputFile){		
+		FileReader fr;
+		BufferedReader buff;
+		
+		try{
+			fr = new FileReader(inputFile);
+			buff = new BufferedReader(fr);
+			
+			//read in each line of the input file
+			String line;
+			while((line = buff.readLine()) != null && line != ""){					
+				String[] feats = line.split(",");			//parse data into an array
+				int[] instance = new int[feats.length];
+				for(int i = 0; i < feats.length-1; i++){
+					instance[i] = Integer.parseInt(feats[i]);
+				}
+				trainData.add(instance);					//add to training or test
+			}
+		}
+		catch(IOException ex){
+			System.err.println("Oh no! An error occurred!\n Error: " + ex);
+			System.exit(0);
+		}
+	}
+	
+	public static void calcProbs(){
+		for(int i = 0; i < trainProb.length; i++){
+			trainProb[i] /= (double)trainTtl;
+		}
+	}
+	
+	public static void calcCondProbs(){
+		for(int[]instance : trainData){
+			for(int i = 0; i < instance.length-1; i++){
+				CPtrain[i][instance[i]][instance[instance.length-1]]++;		//increment count of [feature number][feature value][class]
+			}
+		}
+		for(int i = 0; i < CPtrain.length; i++){
+			for(int j = 0; j < CPtrain[0].length; j++){
+				for(int k = 0; k < CPtrain[0][0].length; k++){
+					CPtrain[i][j][k] /= trainProb[k];
+				}
+			}
+		}
+	}
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO: Read in data file
+		if(!runTests(true, args[0])) System.exit(0);
+		
+		//extractData(args[0]);
 		// TODO: Compute prior probability (included in optdigits.info)
 		// TODO: Compute conditional probabilities for each digit, for each attribute value
 		// TODO: Smooth conditional probabilities
 		// TODO: Run naive Bayes on training data
 		// TODO: Calculate accuracy of test data and single confusion matrix for all 10 digits
 		// TODO: 4 bins
+	}
+	
+	
+	/**** Unit Testing ****/
+	
+	public static void clearData(){
+		trainData.clear();
+	}
+	
+	public static boolean testCalcProbs(){
+		System.out.println("Testing probability calculations...");
+		calcProbs();
+		if(trainProb.length != trainCt.length){
+			System.err.println("Probabilities somehow ended up with a different size than the counts: " + 
+					trainProb.length + " (should be " + trainCt.length + ")");
+			return false;
+		}
+		if(trainProb[5] != 376/3823){
+			System.err.println("Miscalculation; should be " + 376/3823 + " (is " + trainProb[5] + ")");
+			return false;
+		}
+		
+		System.out.println("Probability calculation tests pass! :)");
+		return true;
+	}
+	
+	public static boolean runTests(boolean verbose, String trainFile){
+		clearData();
+		if(!testCalcProbs()) return false;
+		return true;
 	}
 
 }
