@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Bayesian {
 
@@ -69,7 +70,16 @@ public class Bayesian {
 	}
 	
 	public static void calcCondProbs(){
-		for(int[]instance : trainData){
+		
+		//Laplace smoothing
+		for(double[][] digitvals : CPtrain){
+			for(double[] digits : digitvals){
+				Arrays.fill(digits, 1.0);							//initialize entire array to 1 so all counts are 1 greater
+			}
+		}
+		for(int i = 0; i < trainCt.length; i++) trainCt[i] += 17;	//17 different values each attribute could take
+		
+		for(int[] instance : trainData){
 			for(int i = 0; i < instance.length-1; i++){
 				CPtrain[i][instance[i]][instance[instance.length-1]]++;		//increment count of [feature number][feature value][class]
 				//if(i == 0) System.out.println("["+ i + "][" + instance[i] + "][" + instance[instance.length-1] + "]");
@@ -93,8 +103,8 @@ public class Bayesian {
 		if(!runTests(true, args[0])) System.exit(0);
 		
 		//extractData(args[0]);
-		// TODO: Compute prior probability (included in optdigits.info)
-		// TODO: Compute conditional probabilities for each digit, for each attribute value
+		//calcProbs();
+		//calcCondProbs();
 		// TODO: Smooth conditional probabilities
 		// TODO: Run naive Bayes on training data
 		// TODO: Calculate accuracy of test data and single confusion matrix for all 10 digits
@@ -147,25 +157,25 @@ public class Bayesian {
 				System.err.println("The first feature should have more than 0 counted 0s");
 				return false;
 			}
-			if(CPtrain[0][0][i] != 1){
+			if(CPtrain[0][0][i] < .95){
 				System.err.println("Conditional probability miscalculation with " + i + "s; the first feature " +
-						"for all data is 0, so this value should be 1.0: " + CPtrain[0][0][i]);
+						"for all data is 0, so this value should be about 95% (with smoothing): " + CPtrain[0][0][i]);
 				return false;
 			}
 		}
 		
 		//randomly selected, manually calculated examples
-		if(CPtrain[4][16][7] == 134.0/trainCt[7]){
+		if(CPtrain[4][16][7] == 135.0/trainCt[7]){
 			System.err.println("The fourth feature should have 134 counted 16 values for the digit 7:" +
 					"Calculated probability: " + CPtrain[4][16][7] + "; Est. count: " + CPtrain[4][16][7]*trainCt[7]);
 			return false;
 		}
-		if(CPtrain[47][0][4] == 193.0/trainCt[4]){
+		if(CPtrain[47][0][4] == 194.0/trainCt[4]){
 			System.err.println("The 47th feature should have 193 counted 0s for the digit 4:" +
 					"Calculated probability: " + CPtrain[47][0][4] + "; Est. count: " + CPtrain[47][0][4]*trainCt[4]);
 			return false;
 		}
-		if(CPtrain[59][8][9] == 27.0/trainCt[9]){
+		if(CPtrain[59][8][9] == 28.0/trainCt[9]){
 			System.err.println("The 47th feature should have 193 counted 0s for the digit 4:" +
 					"Calculated probability: " + CPtrain[59][8][9] + "; Est. count: " + CPtrain[59][8][9]*trainCt[9]);
 			return false;
