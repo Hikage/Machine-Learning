@@ -154,6 +154,23 @@ public class Bayesian {
 			}
 		}
 		
+		//randomly selected, manually calculated examples
+		if(CPtrain[4][16][7] == 134.0/trainCt[7]){
+			System.err.println("The fourth feature should have 134 counted 16 values for the digit 7:" +
+					"Calculated probability: " + CPtrain[4][16][7] + "; Est. count: " + CPtrain[4][16][7]*trainCt[7]);
+			return false;
+		}
+		if(CPtrain[47][0][4] == 193.0/trainCt[4]){
+			System.err.println("The 47th feature should have 193 counted 0s for the digit 4:" +
+					"Calculated probability: " + CPtrain[47][0][4] + "; Est. count: " + CPtrain[47][0][4]*trainCt[4]);
+			return false;
+		}
+		if(CPtrain[59][8][9] == 27.0/trainCt[9]){
+			System.err.println("The 47th feature should have 193 counted 0s for the digit 4:" +
+					"Calculated probability: " + CPtrain[59][8][9] + "; Est. count: " + CPtrain[59][8][9]*trainCt[9]);
+			return false;
+		}
+		
 		System.out.println("Conditional probability calculation tests pass! :)\n");
 		return true;
 	}
