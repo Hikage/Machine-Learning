@@ -4,7 +4,7 @@
  * bshade@pdx.edu
  *
  * Bayesian.java
- * TODO details on this class
+ * This classifies numerical digits through a naive Bayes probability algorithm
  */
 package hw3Bayesian;
 
@@ -22,20 +22,23 @@ public class Bayesian {
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
 	
+	//Training data
 	private static int[] trainCt = {376, 389, 380, 389, 387, 376, 377, 387, 380, 382};
 	private static final double trainTtl = 3823.0;
 	private static double[] trainProb = new double[trainCt.length];
 	private static double[][][] CPtrain = new double[64][17][10];
 	
+	//Test data
 	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
 	private static final double testTtl = 1797.0;
-	private static double[] testProb = new double[testCt.length];
 
 	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
 	private static final DecimalFormat pf = new DecimalFormat("#.##%");
 	
 	/**
-	 * Reads input file and generates training data set
+	 * Reads input file and generates data set in the form of an array
+	 * @param inputFile: file to be read in
+	 * @param train: whether training data is being processed (as opposed to test data)
 	 */
 	public static void extractData(String inputFile, boolean train){		
 		FileReader fr;
@@ -48,7 +51,7 @@ public class Bayesian {
 			//read in each line of the input file
 			String line;
 			while((line = buff.readLine()) != null && line != ""){					
-				String[] feats = line.split(",");			//parse data into an array
+				String[] feats = line.split(",");					//parse data into an array
 				int[] instance = new int[feats.length];
 				for(int i = 0; i < feats.length; i++){
 					instance[i] = Integer.parseInt(feats[i]);
@@ -65,13 +68,18 @@ public class Bayesian {
 		}
 	}
 	
+	/**
+	 * Calculates the base probabilities of each digit within the training data
+	 */
 	public static void calcProbs(){
 		for(int i = 0; i < trainProb.length; i++){
 			trainProb[i] = trainCt[i] / trainTtl;
-			//System.out.println(trainProb[i]);
 		}
 	}
 	
+	/**
+	 * Calculates the probabilities for each feature for each digit
+	 */
 	public static void calcCondProbs(){
 		
 		//Laplace smoothing
@@ -90,30 +98,28 @@ public class Bayesian {
 		for(int i = 0; i < CPtrain.length; i++){
 			for(int j = 0; j < CPtrain[0].length; j++){
 				for(int k = 0; k < CPtrain[0][0].length; k++){
-					CPtrain[i][j][k] /= trainCt[k];
+					CPtrain[i][j][k] /= trainCt[k];							//convert each feature's count to a probability
 				}
 			}
 		}
 	}
 	
+	/**
+	 * Classifies a given instance
+	 * @param instance: instance array to be classified
+	 * @return: returns the determined classification of the instance
+	 */
 	public static int classifyInst(int[] instance){
 		if(instance == null){
 			System.err.println("Instance to be classified is null");
 			System.exit(0);
 		}
 		
-		for(int i = 0; i < testProb.length; i++) testProb[i] = testCt[i] / testTtl;
-		
-		if(testProb[0] == 0){
-			System.err.println("testProb calculations failed");
-			System.exit(0);
-		}
-		
-		double[] classProbs = new double[testProb.length];
+		double[] classProbs = new double[trainProb.length];
 		
 		//iterate through each possible classification (0-9) and through each feature
 		for(int i = 0; i < classProbs.length; i++){
-			classProbs[i] = Math.log(testProb[i]);
+			classProbs[i] = Math.log(trainProb[i]);
 			for(int j = 0; j < instance.length-1; j++){
 				classProbs[i] += Math.log(CPtrain[j][instance[j]][i]);	//add in log of probability j has value of instance[j] for class i
 			}
@@ -132,10 +138,17 @@ public class Bayesian {
 		return clsif;
 	}
 	
+	/**
+	 * Performs full naive Bayes classification across all test instances
+	 * @param testFile: file to be read in and classified
+	 * @return: returns the confusion matrix obtained from classification
+	 */
 	public static int[][] naiveBayesClass(String testFile){		
 		extractData(testFile, TEST);
 		
-		int[][] conMtrx = new int[testProb.length][4];
+		int[][] conMtrx = new int[testCt.length][4];
+		
+		//iterate through each instance of the data and classify
 		for(int i = 0; i < testData.size(); i++){
 			int clsif = classifyInst(testData.get(i));
 			int trueclsif = testData.get(i)[testData.get(i).length-1];
@@ -145,7 +158,7 @@ public class Bayesian {
 				System.exit(0);
 			}
 			
-			if(clsif == trueclsif){		//correct classification
+			if(clsif == trueclsif){										//correct classification
 				conMtrx[clsif][TP]++;
 				for(int j = 0; j < conMtrx.length; j++){
 					if(j != clsif) conMtrx[j][TN]++;					//increment true negatives for all other classifications
@@ -163,15 +176,21 @@ public class Bayesian {
 		return conMtrx;
 	}
 	
+	/**
+	 * Converts the confusion matrix into a string representation
+	 * @param digitConMtrx: confusion matrix for a specific digit, to be converted
+	 * @return: returns the string representation of the indicated confusion matrix
+	 */
 	public static String digitConMtrxToString(int[] digitConMtrx){
-		String dConMtrxStr = "";
-		
-		dConMtrxStr += digitConMtrx[TP] + "(TP), " + digitConMtrx[TN] + "(TN), " +
+		return digitConMtrx[TP] + "(TP), " + digitConMtrx[TN] + "(TN), " +
 				digitConMtrx[FP] + "(FP), " + digitConMtrx[FN] + "(FN)";
-		
-		return dConMtrxStr;
 	}
 	
+	/**
+	 * Calculates overall accuracy of test data
+	 * @param conMtrx: confusion matrix used to calculate accuracy
+	 * @return: returns overall accuracy of test data
+	 */
 	public static double calcAcc(int[][] conMtrx){		
 		int correct = 0;
 		for(int i = 0; i < conMtrx.length; i++){
@@ -182,7 +201,20 @@ public class Bayesian {
 	}
 	
 	/**
-	 * @param args
+	 * Prints the confusion matrix for all digits and overall accuracy
+	 * @param conMtrx: confusion matrix to be printed
+	 */
+	public static void printConMtrx(int[][] conMtrx){
+		System.out.println((int)testTtl + " total instances");
+		System.out.println("Accuracy: " + pf.format(calcAcc(conMtrx)));
+		for(int i = 0; i < conMtrx.length; i++){
+			System.out.println(i + ": " + digitConMtrxToString(conMtrx[i]));
+		}
+	}
+	
+	/**
+	 * Main method
+	 * @param args: takes in the names of the training data and test data files
 	 */
 	public static void main(String[] args) {
 		if(!runTests(true, args[0], args[1])) System.exit(0);
@@ -190,19 +222,29 @@ public class Bayesian {
 		//extractData(args[0], TRAIN);
 		//calcProbs();
 		//calcCondProbs();
-		//naiveBayesClass(args[1]);
-		// TODO: Calculate accuracy of test data and single confusion matrix for all 10 digits
+		//int[][] conMtrx = naiveBayesClass(args[1]);
+		//printConMtrx(conMtrx);
 		// TODO: 4 bins
 	}
 	
 	
+	/**** Unit Tests ****/
+	
 	/**** Unit Testing ****/
 	
+	/**
+	 * Resets data structures
+	 */
 	public static void clearData(){
 		trainData.clear();
+		testData.clear();
 	}
 	
 	
+	/**
+	 * Tests the calcProbs() method
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testCalcProbs(){
 		System.out.println("Testing probability calculations...");
 		calcProbs();
@@ -224,6 +266,7 @@ public class Bayesian {
 			System.err.println("Total of all probabilities should be 1.0: " + ttl);
 			return false;
 		}
+		//test random example
 		if(trainProb[5] != (double)376/3823){
 			System.err.println("Probability miscalculation; should be " + (double)376/3823 + " (is " + trainProb[5] + ")");
 			return false;
@@ -234,6 +277,10 @@ public class Bayesian {
 	}
 	
 	
+	/**
+	 * Tests the calcCondProbs() method
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testCalcCondProbs(){
 		System.out.println("Testing conditional probability calculations...");
 		calcCondProbs();
@@ -272,9 +319,15 @@ public class Bayesian {
 	}
 	
 	
+	
+	/**
+	 * Tests the classifyInst() method
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testClassifyInst(){
 		System.out.println("Testing instance classification...");
 		
+		//random instances pulled from training data
 		int[] inst1 = {0,0,1,13,14,3,0,0,0,0,8,16,13,2,0,0,0,2,16,16,3,0,0,0,0,3,16,12,1,0,0,0,0,5,16,14,5,0,0,0,0,3,16,16,16,16,6,0,0,1,14,16,16,16,12,0,0,0,3,12,15,14,7,0,6};
 		int clsif = classifyInst(inst1);		
 		if(clsif < 0 || clsif > 9){
@@ -312,15 +365,17 @@ public class Bayesian {
 		return true;
 	}
 	
+	
+	/**
+	 * Tests the naiveBayesClass() method
+	 * @param testFile: file to be extracted
+	 * @param verbose: if test should print additional information
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testNaiveBayesClass(String testFile, boolean verbose){
 		System.out.println("Testing naive Bayes classification...");
 		
 		int[][] conMtrx = naiveBayesClass(testFile);
-		
-		if(verbose){
-			System.out.println((int)testTtl + " total instances");
-			System.out.println("Accuracy: " + pf.format(calcAcc(conMtrx)));
-		}
 			
 		for(int i = 0; i < conMtrx.length; i++){
 			if(conMtrx[i][TP] == 0 || conMtrx[i][TP] == testCt[i]){
@@ -332,15 +387,21 @@ public class Bayesian {
 						digitConMtrxToString(conMtrx[i]));
 				return false;
 			}
-			if(verbose){
-				System.out.println(i + ": " + digitConMtrxToString(conMtrx[i]));
-			}
 		}
+		
+		if(verbose) printConMtrx(conMtrx);
 		
 		System.out.println("Naive Bayes classification tests pass! :)\n");
 		return true;
 	}
 	
+	/**
+	 * Driver for unit tests
+	 * @param verbose: if tests should print additional information
+	 * @param trainFile: training file to be extracted
+	 * @param testFile: test file to be extracted
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean runTests(boolean verbose, String trainFile, String testFile){
 		clearData();
 		extractData(trainFile, TRAIN);
