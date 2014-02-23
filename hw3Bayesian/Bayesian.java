@@ -18,11 +18,17 @@ public class Bayesian {
 
 	private static ArrayList<int[]> trainData = new ArrayList<int[]>();
 	private static ArrayList<int[]> testData = new ArrayList<int[]>();
+	private static final boolean TRAIN = true;
+	private static final boolean TEST = false;
+	
 	private static int[] trainCt = {376, 389, 380, 389, 387, 376, 377, 387, 380, 382};
-	private static int trainTtl = 3823;
+	private static final double trainTtl = 3823.0;
 	private static double[] trainProb = new double[trainCt.length];
 	private static double[][][] CPtrain = new double[64][17][10];
-	private static double[] testProb = {178.0, 182.0, 177.0, 183.0, 181.0, 182.0, 181.0, 179.0, 174.0, 180.0};
+	
+	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
+	private static final double testTtl = 1797.0;
+	private static double[] testProb = new double[testCt.length];
 	
 	/**
 	 * Reads input file and generates training data set
@@ -57,7 +63,7 @@ public class Bayesian {
 	
 	public static void calcProbs(){
 		for(int i = 0; i < trainProb.length; i++){
-			trainProb[i] = trainCt[i] / (double)trainTtl;
+			trainProb[i] = trainCt[i] / trainTtl;
 			//System.out.println(trainProb[i]);
 		}
 	}
@@ -86,28 +92,33 @@ public class Bayesian {
 		}
 	}
 	
-	public static int classifyInst(int inst){
-		int[] instance = testData.get(inst);
-		
-		if(testProb[0] > 1){
-			System.err.println("testProb hasn't yet been initialized fully with probabilities!");
+	public static int classifyInst(int[] instance){
+		if(instance == null){
+			System.err.println("Instance to be classified is null");
 			System.exit(0);
 		}
 		
-		double[] classProbs = testProb.clone();
+		for(int i = 0; i < testProb.length; i++) testProb[i] = testCt[i] / testTtl;
+		
+		if(testProb[0] == 0){
+			System.err.println("testProb calculations failed");
+			System.exit(0);
+		}
+		
+		double[] classProbs = new double[testProb.length];
 		
 		//iterate through each possible classification (0-9) and through each feature
 		for(int i = 0; i < classProbs.length; i++){
+			classProbs[i] = Math.log(testProb[i]);
 			for(int j = 0; j < instance.length-1; j++){
-				classProbs[i] *= CPtrain[j][instance[j]][i];	//multiply in probability att j has value of instance[j] for class i
+				classProbs[i] += Math.log(CPtrain[j][instance[j]][i]);	//add in log of probability j has value of instance[j] for class i
 			}
 		}
 		
 		//find classification with highest probability
-		double max = 0;
+		double max = Double.NEGATIVE_INFINITY;
 		int clsif = -1;
 		for(int i = 0; i < classProbs.length; i++){
-			classProbs[i] = Math.log(classProbs[i]);
 			if(classProbs[i] > max){
 				max = classProbs[i];
 				clsif = i;
@@ -117,14 +128,12 @@ public class Bayesian {
 		return clsif;
 	}
 	
-	public static void naiveBayesClass(String testFile){
-		for(int i = 0; i < testProb.length; i++) testProb[i] /= 1797;
-		
-		extractData(testFile, false);
+	public static int[] naiveBayesClass(String testFile){		
+		extractData(testFile, TEST);
 		
 		int[] correct = new int[testProb.length];
 		for(int i = 0; i < testData.size(); i++){
-			int clsif = classifyInst(i);
+			int clsif = classifyInst(testData.get(i));
 			if(clsif < 0){
 				System.err.println("Error finding maximum probability for classification");
 				System.exit(0);
@@ -133,9 +142,7 @@ public class Bayesian {
 			if(clsif == testData.get(i)[testData.get(i).length-1]) correct[clsif]++;
 		}
 		
-		for(int i = 0; i < correct.length; i++){
-			System.out.println(i + ": " + correct[i]);
-		}
+		return correct;
 	}
 	
 	/**
@@ -158,6 +165,7 @@ public class Bayesian {
 	public static void clearData(){
 		trainData.clear();
 	}
+	
 	
 	public static boolean testCalcProbs(){
 		System.out.println("Testing probability calculations...");
@@ -188,6 +196,7 @@ public class Bayesian {
 		System.out.println("Probability calculation tests pass! :)\n");
 		return true;
 	}
+	
 	
 	public static boolean testCalcCondProbs(){
 		System.out.println("Testing conditional probability calculations...");
@@ -226,12 +235,71 @@ public class Bayesian {
 		return true;
 	}
 	
+	
+	public static boolean testClassifyInst(){
+		System.out.println("Testing instance classification...");
+		
+		int[] inst1 = {0,0,1,13,14,3,0,0,0,0,8,16,13,2,0,0,0,2,16,16,3,0,0,0,0,3,16,12,1,0,0,0,0,5,16,14,5,0,0,0,0,3,16,16,16,16,6,0,0,1,14,16,16,16,12,0,0,0,3,12,15,14,7,0,6};
+		int clsif = classifyInst(inst1);		
+		if(clsif < 0 || clsif > 9){
+			System.err.println("Classification outside of acceptable range: " + clsif);
+			return false;
+		}
+		if(clsif != 6){
+			System.err.println("Known training instance misclassified (should be 6): " + clsif);
+			return false;
+		}
+		
+		int[] inst2 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		clsif = classifyInst(inst2);		
+		if(clsif < 0 || clsif > 9){
+			System.err.println("Classification outside of acceptable range: " + clsif);
+			return false;
+		}
+		if(clsif != 9){
+			System.err.println("Known training instance misclassified (should be 9): " + clsif);
+			return false;
+		}
+		
+		int[] inst3 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		clsif = classifyInst(inst3);		
+		if(clsif < 0 || clsif > 9){
+			System.err.println("Classification outside of acceptable range: " + clsif);
+			return false;
+		}
+		if(clsif != 5){
+			System.err.println("Known training instance misclassified (should be 5): " + clsif);
+			return false;
+		}
+		
+		System.out.println("Instance classification tests pass! :)\n");
+		return true;
+	}
+	
+	public static boolean testNaiveBayesClass(String testFile, boolean verbose){
+		System.out.println("Testing naive Bayes classification...");
+		
+		int[] correct = naiveBayesClass(testFile);
+		
+		for(int i = 0; i < correct.length; i++){
+			if(correct[i] == 0 || correct[i] == testCt[i]){
+				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + correct[i]);
+				return false;
+			}
+			if(verbose) System.out.println(i + ": " + correct[i] + "/" + testCt[i]);
+		}
+		
+		System.out.println("Naive Bayes classification tests pass! :)\n");
+		return true;
+	}
+	
 	public static boolean runTests(boolean verbose, String trainFile, String testFile){
 		clearData();
-		extractData(trainFile, true);
+		extractData(trainFile, TRAIN);
 		if(!testCalcProbs()) return false;
 		if(!testCalcCondProbs()) return false;
-		naiveBayesClass(testFile);
+		if(!testClassifyInst()) return false;
+		if(!testNaiveBayesClass(testFile, verbose)) return false;
 		return true;
 	}
 
