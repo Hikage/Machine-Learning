@@ -11,6 +11,7 @@ package hw3Bayesian;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -31,6 +32,7 @@ public class Bayesian {
 	private static double[] testProb = new double[testCt.length];
 
 	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
+	private static final DecimalFormat pf = new DecimalFormat("#.##%");
 	
 	/**
 	 * Reads input file and generates training data set
@@ -159,6 +161,24 @@ public class Bayesian {
 		}
 		
 		return conMtrx;
+	}
+	
+	public static String digitConMtrxToString(int[] digitConMtrx){
+		String dConMtrxStr = "";
+		
+		dConMtrxStr += digitConMtrx[TP] + "(TP), " + digitConMtrx[TN] + "(TN), " +
+				digitConMtrx[FP] + "(FP), " + digitConMtrx[FN] + "(FN)";
+		
+		return dConMtrxStr;
+	}
+	
+	public static double calcAcc(int[][] conMtrx){		
+		int correct = 0;
+		for(int i = 0; i < conMtrx.length; i++){
+			correct += conMtrx[i][TP] + conMtrx[i][TN];
+		}
+		
+		return correct/testTtl/testCt.length;
 	}
 	
 	/**
@@ -297,12 +317,24 @@ public class Bayesian {
 		
 		int[][] conMtrx = naiveBayesClass(testFile);
 		
+		if(verbose){
+			System.out.println((int)testTtl + " total instances");
+			System.out.println("Accuracy: " + pf.format(calcAcc(conMtrx)));
+		}
+			
 		for(int i = 0; i < conMtrx.length; i++){
 			if(conMtrx[i][TP] == 0 || conMtrx[i][TP] == testCt[i]){
 				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + conMtrx[i][TP]);
 				return false;
 			}
-			if(verbose) System.out.println(i + ": " + conMtrx[i][TP] + "/" + testCt[i]);
+			if(conMtrx[i][TP] + conMtrx[i][TN] + conMtrx[i][FP] + conMtrx[i][FN] != testTtl){
+				System.err.println("Confusion matrix for digit " + i + " should sum to total instance count (" + testTtl + "): " +
+						digitConMtrxToString(conMtrx[i]));
+				return false;
+			}
+			if(verbose){
+				System.out.println(i + ": " + digitConMtrxToString(conMtrx[i]));
+			}
 		}
 		
 		System.out.println("Naive Bayes classification tests pass! :)\n");
