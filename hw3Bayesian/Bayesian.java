@@ -29,6 +29,8 @@ public class Bayesian {
 	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
 	private static final double testTtl = 1797.0;
 	private static double[] testProb = new double[testCt.length];
+
+	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
 	
 	/**
 	 * Reads input file and generates training data set
@@ -128,21 +130,35 @@ public class Bayesian {
 		return clsif;
 	}
 	
-	public static int[] naiveBayesClass(String testFile){		
+	public static int[][] naiveBayesClass(String testFile){		
 		extractData(testFile, TEST);
 		
-		int[] correct = new int[testProb.length];
+		int[][] conMtrx = new int[testProb.length][4];
 		for(int i = 0; i < testData.size(); i++){
 			int clsif = classifyInst(testData.get(i));
+			int trueclsif = testData.get(i)[testData.get(i).length-1];
+			
 			if(clsif < 0){
 				System.err.println("Error finding maximum probability for classification");
 				System.exit(0);
 			}
 			
-			if(clsif == testData.get(i)[testData.get(i).length-1]) correct[clsif]++;
+			if(clsif == trueclsif){		//correct classification
+				conMtrx[clsif][TP]++;
+				for(int j = 0; j < conMtrx.length; j++){
+					if(j != clsif) conMtrx[j][TN]++;					//increment true negatives for all other classifications
+				}
+			}
+			else{														//incorrect classification
+				conMtrx[clsif][FP]++;
+				conMtrx[trueclsif][FN]++;
+				for(int j = 0; j < conMtrx.length; j++){
+					if(j != clsif && j != trueclsif) conMtrx[j][TN]++;	//increment true negatives for all other classifications
+				}
+			}
 		}
 		
-		return correct;
+		return conMtrx;
 	}
 	
 	/**
@@ -151,10 +167,10 @@ public class Bayesian {
 	public static void main(String[] args) {
 		if(!runTests(true, args[0], args[1])) System.exit(0);
 		
-		//extractData(args[0], true);
+		//extractData(args[0], TRAIN);
 		//calcProbs();
 		//calcCondProbs();
-		// TODO: Run naive Bayes on training data
+		//naiveBayesClass(args[1]);
 		// TODO: Calculate accuracy of test data and single confusion matrix for all 10 digits
 		// TODO: 4 bins
 	}
@@ -279,14 +295,14 @@ public class Bayesian {
 	public static boolean testNaiveBayesClass(String testFile, boolean verbose){
 		System.out.println("Testing naive Bayes classification...");
 		
-		int[] correct = naiveBayesClass(testFile);
+		int[][] conMtrx = naiveBayesClass(testFile);
 		
-		for(int i = 0; i < correct.length; i++){
-			if(correct[i] == 0 || correct[i] == testCt[i]){
-				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + correct[i]);
+		for(int i = 0; i < conMtrx.length; i++){
+			if(conMtrx[i][TP] == 0 || conMtrx[i][TP] == testCt[i]){
+				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + conMtrx[i][TP]);
 				return false;
 			}
-			if(verbose) System.out.println(i + ": " + correct[i] + "/" + testCt[i]);
+			if(verbose) System.out.println(i + ": " + conMtrx[i][TP] + "/" + testCt[i]);
 		}
 		
 		System.out.println("Naive Bayes classification tests pass! :)\n");
