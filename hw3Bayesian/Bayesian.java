@@ -39,8 +39,9 @@ public class Bayesian {
 	 * Reads input file and generates data set in the form of an array
 	 * @param inputFile: file to be read in
 	 * @param train: whether training data is being processed (as opposed to test data)
+	 * @param bin: whether data should be binned
 	 */
-	public static void extractData(String inputFile, boolean train){		
+	public static void extractData(String inputFile, boolean train, boolean bin){		
 		FileReader fr;
 		BufferedReader buff;
 		
@@ -66,6 +67,8 @@ public class Bayesian {
 			System.err.println("Oh no! An error occurred!\n Error: " + ex);
 			System.exit(0);
 		}
+		
+		if(bin) binFeatures(train);
 	}
 	
 	/**
@@ -79,8 +82,9 @@ public class Bayesian {
 	
 	/**
 	 * Calculates the probabilities for each feature for each digit
+	 * @param numVals: how many bins the data is in
 	 */
-	public static void calcCondProbs(){
+	public static void calcCondProbs(int numVals){
 		
 		//Laplace smoothing
 		for(double[][] digitvals : CPtrain){
@@ -88,7 +92,7 @@ public class Bayesian {
 				Arrays.fill(digits, 1.0);									//initialize entire array to 1 so all counts are 1 greater
 			}
 		}
-		for(int i = 0; i < trainCt.length; i++) trainCt[i] += 17;			//17 different values each attribute could take
+		for(int i = 0; i < trainCt.length; i++) trainCt[i] += numVals;		//17 different values each attribute could take
 		
 		for(int[] instance : trainData){
 			for(int i = 0; i < instance.length-1; i++){
@@ -141,10 +145,11 @@ public class Bayesian {
 	/**
 	 * Performs full naive Bayes classification across all test instances
 	 * @param testFile: file to be read in and classified
+	 * @param bin: whether data should be binned
 	 * @return: returns the confusion matrix obtained from classification
 	 */
-	public static int[][] naiveBayesClass(String testFile){		
-		extractData(testFile, TEST);
+	public static int[][] naiveBayesClass(String testFile, boolean bin){		
+		extractData(testFile, TEST, bin);
 		
 		int[][] conMtrx = new int[testCt.length][4];
 		
@@ -213,11 +218,32 @@ public class Bayesian {
 	}
 	
 	/**
+	 * Bins all features of training or test data into four bins
+	 * @param train
+	 */
+	public static void binFeatures(boolean train){
+		if(train){
+			for(int i = 0; i < trainData.size(); i++){
+				for(int j = 0; j < trainData.get(i).length-1; j++){			//bin all features - not true classification
+					trainData.get(i)[j] = (trainData.get(i)[j]-1)/4;
+				}
+			}
+		}
+		else{
+			for(int i = 0; i < testData.size(); i++){
+				for(int j = 0; j < testData.get(i).length-1; j++){			//bin all features - not true classification
+					testData.get(i)[j] = (testData.get(i)[j]-1)/4;
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Main method
 	 * @param args: takes in the names of the training data and test data files
 	 */
 	public static void main(String[] args) {
-		if(!runTests(true, args[0], args[1])) System.exit(0);
+		if(!runTests(true, args[0], args[1], false)) System.exit(0);
 		
 		//extractData(args[0], TRAIN);
 		//calcProbs();
@@ -279,11 +305,13 @@ public class Bayesian {
 	
 	/**
 	 * Tests the calcCondProbs() method
+	 * @param bin: whether data should be binned
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean testCalcCondProbs(){
+	public static boolean testCalcCondProbs(boolean bin){
 		System.out.println("Testing conditional probability calculations...");
-		calcCondProbs();
+		if(bin) calcCondProbs(4);
+		else calcCondProbs(17);
 		
 		for(int i = 0; i < trainCt.length; i++){
 			if(CPtrain[0][0][i] == 0){
@@ -322,24 +350,35 @@ public class Bayesian {
 	
 	/**
 	 * Tests the classifyInst() method
+	 * @param bin: whether data should be binned
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean testClassifyInst(){
+	public static boolean testClassifyInst(boolean bin){
 		System.out.println("Testing instance classification...");
 		
 		//random instances pulled from training data
-		int[] inst1 = {0,0,1,13,14,3,0,0,0,0,8,16,13,2,0,0,0,2,16,16,3,0,0,0,0,3,16,12,1,0,0,0,0,5,16,14,5,0,0,0,0,3,16,16,16,16,6,0,0,1,14,16,16,16,12,0,0,0,3,12,15,14,7,0,6};
+		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		if(bin){
+			for(int i = 0; i < inst1.length-1; i++){
+				inst1[i] = (inst1[i]-1)/4;
+			}
+		}		
 		int clsif = classifyInst(inst1);		
 		if(clsif < 0 || clsif > 9){
 			System.err.println("Classification outside of acceptable range: " + clsif);
 			return false;
 		}
-		if(clsif != 6){
-			System.err.println("Known training instance misclassified (should be 6): " + clsif);
+		if(clsif != 4){
+			System.err.println("Known training instance misclassified (should be 4): " + clsif);
 			return false;
 		}
 		
 		int[] inst2 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		if(bin){
+			for(int i = 0; i < inst2.length-1; i++){
+				inst2[i] = (inst2[i]-1)/4;
+			}
+		}
 		clsif = classifyInst(inst2);		
 		if(clsif < 0 || clsif > 9){
 			System.err.println("Classification outside of acceptable range: " + clsif);
@@ -351,6 +390,11 @@ public class Bayesian {
 		}
 		
 		int[] inst3 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		if(bin){
+			for(int i = 0; i < inst2.length-1; i++){
+				inst2[i] = (inst2[i]-1)/4;
+			}
+		}
 		clsif = classifyInst(inst3);		
 		if(clsif < 0 || clsif > 9){
 			System.err.println("Classification outside of acceptable range: " + clsif);
@@ -370,12 +414,13 @@ public class Bayesian {
 	 * Tests the naiveBayesClass() method
 	 * @param testFile: file to be extracted
 	 * @param verbose: if test should print additional information
+	 * @param bin: whether data should be binned
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean testNaiveBayesClass(String testFile, boolean verbose){
+	public static boolean testNaiveBayesClass(String testFile, boolean verbose, boolean bin){
 		System.out.println("Testing naive Bayes classification...");
 		
-		int[][] conMtrx = naiveBayesClass(testFile);
+		int[][] conMtrx = naiveBayesClass(testFile, bin);
 			
 		for(int i = 0; i < conMtrx.length; i++){
 			if(conMtrx[i][TP] == 0 || conMtrx[i][TP] == testCt[i]){
@@ -400,15 +445,16 @@ public class Bayesian {
 	 * @param verbose: if tests should print additional information
 	 * @param trainFile: training file to be extracted
 	 * @param testFile: test file to be extracted
+	 * @param bin: whether data should be binned
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean runTests(boolean verbose, String trainFile, String testFile){
+	public static boolean runTests(boolean verbose, String trainFile, String testFile, boolean bin){
 		clearData();
-		extractData(trainFile, TRAIN);
+		extractData(trainFile, TRAIN, bin);
 		if(!testCalcProbs()) return false;
-		if(!testCalcCondProbs()) return false;
-		if(!testClassifyInst()) return false;
-		if(!testNaiveBayesClass(testFile, verbose)) return false;
+		if(!testCalcCondProbs(bin)) return false;
+		if(!testClassifyInst(bin)) return false;
+		if(!testNaiveBayesClass(testFile, verbose, bin)) return false;
 		return true;
 	}
 
