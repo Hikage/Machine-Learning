@@ -26,7 +26,7 @@ public class Bayesian {
 	private static int[] trainCt = {376, 389, 380, 389, 387, 376, 377, 387, 380, 382};
 	private static final double trainTtl = 3823.0;
 	private static double[] trainProb = new double[trainCt.length];
-	private static double[][][] CPtrain = new double[64][17][10];
+	private static double[][][] CPtrain;
 	
 	//Test data
 	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
@@ -85,6 +85,7 @@ public class Bayesian {
 	 * @param numVals: how many bins the data is in
 	 */
 	public static void calcCondProbs(int numVals){
+		CPtrain = new double[64][numVals][10];	
 		
 		//Laplace smoothing
 		for(double[][] digitvals : CPtrain){
