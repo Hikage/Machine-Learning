@@ -239,18 +239,32 @@ public class Bayesian {
 	}
 	
 	/**
+	 * Executes each method as needed
+	 * @param trainFile: training data file
+	 * @param testFile: test data file
+	 * @param bin: whether data should be binned
+	 */
+	public static void run(String trainFile, String testFile, boolean bin){
+		extractData(trainFile, TRAIN, bin);
+		calcProbs();
+		if(bin) calcCondProbs(4);
+		else calcCondProbs(17);
+		printConMtrx(naiveBayesClass(testFile, bin));
+	}
+	
+	/**
 	 * Main method
 	 * @param args: takes in the names of the training data and test data files
 	 */
 	public static void main(String[] args) {
-		if(!runTests(true, args[0], args[1], false)) System.exit(0);
+		//if(!runTests(true, args[0], args[1], false)) System.exit(0);
 		
-		//extractData(args[0], TRAIN);
-		//calcProbs();
-		//calcCondProbs();
-		//int[][] conMtrx = naiveBayesClass(args[1]);
-		//printConMtrx(conMtrx);
-		// TODO: 4 bins
+		System.out.println("Not binned");
+		run(args[0], args[1], false);
+		clearData();
+		
+		System.out.println("\nBinned");
+		run(args[0], args[1], true);
 	}
 	
 	
