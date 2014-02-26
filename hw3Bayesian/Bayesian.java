@@ -32,7 +32,6 @@ public class Bayesian {
 	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
 	private static final double testTtl = 1797.0;
 
-	private static final int TP = 0, FP = 1, FN = 2, TN = 3;
 	private static final DecimalFormat pf = new DecimalFormat("#.##%");
 	
 	/**
@@ -152,7 +151,7 @@ public class Bayesian {
 	public static int[][] naiveBayesClass(String testFile, boolean bin){		
 		extractData(testFile, TEST, bin);
 		
-		int[][] conMtrx = new int[testCt.length][4];
+		int[][] conMtrx = new int[testCt.length][testCt.length];
 		
 		//iterate through each instance of the data and classify
 		for(int i = 0; i < testData.size(); i++){
@@ -164,19 +163,7 @@ public class Bayesian {
 				System.exit(0);
 			}
 			
-			if(clsif == trueclsif){										//correct classification
-				conMtrx[clsif][TP]++;
-				for(int j = 0; j < conMtrx.length; j++){
-					if(j != clsif) conMtrx[j][TN]++;					//increment true negatives for all other classifications
-				}
-			}
-			else{														//incorrect classification
-				conMtrx[clsif][FP]++;
-				conMtrx[trueclsif][FN]++;
-				for(int j = 0; j < conMtrx.length; j++){
-					if(j != clsif && j != trueclsif) conMtrx[j][TN]++;	//increment true negatives for all other classifications
-				}
-			}
+			conMtrx[trueclsif][clsif]++;			//build confusion matrix
 		}
 		
 		return conMtrx;
@@ -188,8 +175,11 @@ public class Bayesian {
 	 * @return: returns the string representation of the indicated confusion matrix
 	 */
 	public static String digitConMtrxToString(int[] digitConMtrx){
-		return digitConMtrx[TP] + "(TP), " + digitConMtrx[TN] + "(TN), " +
-				digitConMtrx[FP] + "(FP), " + digitConMtrx[FN] + "(FN)";
+		String mtrxStr = "";
+		for(int i = 0; i < digitConMtrx.length; i++){
+			mtrxStr += (digitConMtrx[i] + "\t");
+		}
+		return mtrxStr;
 	}
 	
 	/**
@@ -200,10 +190,10 @@ public class Bayesian {
 	public static double calcAcc(int[][] conMtrx){		
 		int correct = 0;
 		for(int i = 0; i < conMtrx.length; i++){
-			correct += conMtrx[i][TP] + conMtrx[i][TN];
+			correct += conMtrx[i][i];
 		}
 		
-		return correct/testTtl/testCt.length;
+		return correct/testTtl;
 	}
 	
 	/**
@@ -214,7 +204,11 @@ public class Bayesian {
 		System.out.println((int)testTtl + " total instances");
 		System.out.println("Accuracy: " + pf.format(calcAcc(conMtrx)));
 		for(int i = 0; i < conMtrx.length; i++){
-			System.out.println(i + ": " + digitConMtrxToString(conMtrx[i]));
+			System.out.print("\t" + i);
+		}
+		System.out.println();
+		for(int i = 0; i < conMtrx.length; i++){
+			System.out.println(i + "\t" + digitConMtrxToString(conMtrx[i]));
 		}
 	}
 	
@@ -270,8 +264,6 @@ public class Bayesian {
 	
 	
 	/**** Unit Tests ****/
-	
-	/**** Unit Testing ****/
 	
 	/**
 	 * Resets data structures
@@ -438,12 +430,14 @@ public class Bayesian {
 		int[][] conMtrx = naiveBayesClass(testFile, bin);
 			
 		for(int i = 0; i < conMtrx.length; i++){
-			if(conMtrx[i][TP] == 0 || conMtrx[i][TP] == testCt[i]){
-				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + conMtrx[i][TP]);
+			if(conMtrx[i][i] == 0 || conMtrx[i][i] == testCt[i]){
+				System.err.println("Perfect accuracy or failure very unlikely for " + i + ": " + conMtrx[i][i]);
 				return false;
 			}
-			if(conMtrx[i][TP] + conMtrx[i][TN] + conMtrx[i][FP] + conMtrx[i][FN] != testTtl){
-				System.err.println("Confusion matrix for digit " + i + " should sum to total instance count (" + testTtl + "): " +
+			int isum = 0;
+			for(int j = 0; j < conMtrx[i].length; j++) isum += conMtrx[i][j];
+			if(isum != testCt[i]){
+				System.err.println("Confusion matrix for digit " + i + " should sum to total instance count (" + testCt[i] + "): " +
 						digitConMtrxToString(conMtrx[i]));
 				return false;
 			}
