@@ -54,13 +54,58 @@ public class Kmeans {
 	}
 
 	//TODO
-	public static void bestIteration(){
-		//for i = 1 : 5
-		//	choose k random initial cluster centers
-		//	until cluster centers stop moving, update centers
-		//	calculate the SSE
-		//	keep the iteration with the smallest SSE
-		//calculate SSS and mean entropy
+	public static void initializeClusters(int k){
+		
+	}
+	
+	//TODO
+	public static double updateClusters(){
+		double var = 0.0;
+		
+		//return amount of variance from previous cluster set
+		return var;
+	}
+	
+	//TODO
+	public static double calculateSSE(){
+		double SSE = 0.0;
+		
+		return SSE;
+	}
+	
+	//TODO
+	public static double calculateSSS(){
+		double SSS = 0.0;
+		
+		return SSS;
+	}
+	
+	//TODO
+	public static double calculateMEntropy(){
+		double mEntropy = 0.0;
+		
+		return mEntropy;
+	}
+	
+	//TODO
+	public static void bestIteration(int k){
+		int itCap = 100;
+		double thresh = 1.0;
+		
+		double SSE = 0.0;
+		for(int i = 0; i < 5; i++){
+			initializeClusters(k);
+			for(int j = 0; j < itCap; j++){
+				if(updateClusters() < thresh) break;	//until cluster centers stop moving, update centers
+			}
+			double newSSE = calculateSSE();
+			if(newSSE < SSE){
+				SSE = newSSE;
+				//maintain cluster set
+			}
+		}
+		double SSS = calculateSSS();
+		double mEntropy = calculateMEntropy();
 	}
 	
 	//TODO
@@ -72,11 +117,14 @@ public class Kmeans {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if(!runTests(true, args[0], args[1])) System.exit(0);
+		String trainFile = args[0], testFile = args[1];
+		int k = Integer.parseInt(args[3]);
 		
-		extractData(args[0], TRAIN);
-		bestIteration();
-		extractData(args[1], TEST);
+		if(!runTests(true, trainFile, testFile, k)) System.exit(0);
+		
+		extractData(trainFile, TRAIN);
+		bestIteration(k);
+		extractData(testFile, TEST);
 		classifyData();
 	}
 	
@@ -92,7 +140,47 @@ public class Kmeans {
 	}
 	
 	//TODO
-	public static boolean testBestIteration(){
+	public static boolean testInitializeClusters(int k){
+		System.out.println("Testing cluster initialization...");
+		
+		System.out.println("Cluster initialization tests pass! :)\n");
+		return true;
+	}
+	
+	//TODO
+	public static boolean testUpdateClusters(){
+		System.out.println("Testing cluster updates...");
+		
+		System.out.println("Cluster update tests pass! :)\n");
+		return true;
+	}
+	
+	//TODO
+	public static boolean testCalculateSSE(){
+		System.out.println("Testing SSE calculation...");
+		
+		System.out.println("SSE calculation tests pass! :)\n");
+		return true;
+	}
+	
+	//TODO
+	public static boolean testCalculateSSS(){
+		System.out.println("Testing SSS calculation...");
+		
+		System.out.println("SSS calculation tests pass! :)\n");
+		return true;
+	}
+	
+	//TODO
+	public static boolean testCalculateMEntropy(){
+		System.out.println("Testing mean entropy calculation...");
+		
+		System.out.println("Mean entropy calculation tests pass! :)\n");
+		return true;
+	}
+	
+	//TODO
+	public static boolean testBestIteration(int k){
 		System.out.println("Testing best iteration determination...");
 		
 		System.out.println("Best iteration determination tests pass! :)\n");
@@ -114,10 +202,15 @@ public class Kmeans {
 	 * @param testFile: test file to be extracted
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean runTests(boolean verbose, String trainFile, String testFile){
+	public static boolean runTests(boolean verbose, String trainFile, String testFile, int k){
 		clearData();
 		extractData(trainFile, TRAIN);
-		if(!testBestIteration()) return false;
+		if(!testInitializeClusters(k)) return false;
+		if(!testUpdateClusters()) return false;
+		if(!testCalculateSSE()) return false;
+		if(!testCalculateSSS()) return false;
+		if(!testCalculateMEntropy()) return false;
+		if(!testBestIteration(k)) return false;
 		extractData(testFile, TEST);
 		if(!testClassifyData()) return false;
 		return true;
