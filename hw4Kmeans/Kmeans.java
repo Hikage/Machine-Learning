@@ -12,10 +12,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Kmeans {
 	private static ArrayList<int[]> trainData = new ArrayList<int[]>();
 	private static ArrayList<int[]> testData = new ArrayList<int[]>();
+	private static int[][] clusters;
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
 	
@@ -55,7 +57,12 @@ public class Kmeans {
 
 	//TODO
 	public static void initializeClusters(int k){
+		clusters = new int[k][trainData.get(0).length];
 		
+		for(int i = 0; i < k; i++){
+			int rand = new Random().nextInt(trainData.size());		//extract random instances to use as cluster centers
+			clusters[i] = trainData.get(rand);
+		}
 	}
 	
 	//TODO
@@ -117,8 +124,13 @@ public class Kmeans {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		if(args.length != 3){
+			System.err.println("Usage: java hw4Kmeans.Kmeans inputdata.train inputdata.test K-value");
+			System.exit(0);
+		}
+		
 		String trainFile = args[0], testFile = args[1];
-		int k = Integer.parseInt(args[3]);
+		int k = Integer.parseInt(args[2]);
 		
 		if(!runTests(true, trainFile, testFile, k)) System.exit(0);
 		
@@ -142,6 +154,27 @@ public class Kmeans {
 	//TODO
 	public static boolean testInitializeClusters(int k){
 		System.out.println("Testing cluster initialization...");
+		
+		initializeClusters(k);
+		if(clusters.length != k){
+			System.err.println("Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
+			return false;
+		}
+		
+		int rand1 = new Random().nextInt(clusters.length);
+		int rand2;
+		do rand2 = new Random().nextInt(clusters.length);
+		while(rand1 == rand2);
+		
+		boolean equals = true;
+		for(int i = 0; i < clusters[rand1].length; i++){
+			equals = equals && (clusters[rand2][i] == clusters[1][i]);
+			if(!equals) break;
+		}
+		if(equals){
+			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2);
+			return false;
+		}
 		
 		System.out.println("Cluster initialization tests pass! :)\n");
 		return true;
@@ -187,6 +220,53 @@ public class Kmeans {
 		return true;
 	}
 	
+	/**
+	 * Tests extractData() method
+	 * @param trainFile: training data file to be read in
+	 * @param testFile: test data file to be read in
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testExtractData(String trainFile, String testFile){
+		System.out.println("Testing data extraction...");
+		
+		//test training data
+		extractData(trainFile, TRAIN);
+		if(trainData.size() != 3823){
+			System.err.println("Wrong number of training instances read in: " + trainData.size());
+			return false;
+		}
+		for(int i = 0; i < trainData.size(); i++){
+			if(trainData.get(i)[0] != 0){
+				System.err.println("First value for training instance " + i + "should be 0: " + trainData.get(i)[0]);
+				return false;
+			}
+		}
+		if(trainData.get(27)[33] != 2){		//random instance
+			System.err.println("Value for training instance 27 feature 33 should be 2: " + trainData.get(27)[33]);
+			return false;
+		}
+		
+		//test test data
+		extractData(testFile, TEST);
+		if(testData.size() != 1797){
+			System.err.println("Wrong number of test instances read in: " + testData.size());
+			return false;
+		}
+		for(int i = 0; i < testData.size(); i++){
+			if(testData.get(i)[0] != 0){
+				System.err.println("First value for test instance " + i + "should be 0: " + testData.get(i)[0]);
+				return false;
+			}
+		}
+		if(testData.get(1385)[53] != 16){		//random instance
+			System.err.println("Value for test instance 1385 feature 53 should be 16: " + testData.get(1385)[53]);
+			return false;
+		}
+		
+		System.out.println("Data extraction tests pass! :)\n");
+		return true;
+	}
+	
 	//TODO
 	public static boolean testClassifyData(){
 		System.out.println("Testing data classification...");
@@ -204,14 +284,13 @@ public class Kmeans {
 	 */
 	public static boolean runTests(boolean verbose, String trainFile, String testFile, int k){
 		clearData();
-		extractData(trainFile, TRAIN);
+		if(!testExtractData(trainFile, testFile)) return false;
 		if(!testInitializeClusters(k)) return false;
 		if(!testUpdateClusters()) return false;
 		if(!testCalculateSSE()) return false;
 		if(!testCalculateSSS()) return false;
 		if(!testCalculateMEntropy()) return false;
 		if(!testBestIteration(k)) return false;
-		extractData(testFile, TEST);
 		if(!testClassifyData()) return false;
 		return true;
 	}
