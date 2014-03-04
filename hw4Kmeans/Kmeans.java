@@ -4,7 +4,7 @@
  * bshade@pdx.edu
  *
  * Kmeans.java
- * TODO details on this class
+ * This classifies numerical digits through a K-means clustering algorithm
  */
 package hw4Kmeans;
 
@@ -55,7 +55,10 @@ public class Kmeans {
 		}
 	}
 
-	//TODO
+	/**
+	 * Initializes preliminary cluster centers (randomly from training instances)
+	 * @param k: number of clusters to initialize
+	 */
 	public static void initializeClusters(int k){
 		clusters = new int[k][trainData.get(0).length];
 		
@@ -65,9 +68,40 @@ public class Kmeans {
 		}
 	}
 	
+	/**
+	 * Given an input training instance, calculates the closest cluster center
+	 * @param inst: instance to be classified
+	 * @return: returns the index of the closest cluster center
+	 */
+	public static int assignCluster(int[] inst){
+		int bestcl = 0;
+		double besteudist = Double.POSITIVE_INFINITY;
+		
+		//calculate the euclidean distance for each cluster center to find the closest
+		for(int i = 0; i < clusters.length; i++){
+			double eudist = 0.0;
+			for(int j = 0; j < clusters[0].length; j++){
+				eudist += Math.pow(inst[j] - clusters[i][j], 2);
+			}
+			eudist = Math.sqrt(eudist);
+			
+			if(eudist < besteudist){
+				besteudist = eudist;
+				bestcl = i;
+			}
+		}
+		
+		return bestcl;
+	}
+	
 	//TODO
 	public static double updateClusters(){
 		double var = 0.0;
+		ArrayList[] clustmembers = new ArrayList[clusters.length];
+		
+		for(int[] inst : trainData){
+			//classify each instance, adding its index to the appropriate cluster
+		}
 		
 		//return amount of variance from previous cluster set
 		return var;
@@ -140,6 +174,26 @@ public class Kmeans {
 		classifyData();
 	}
 	
+	/**** Printing Methods ****/
+	
+	public static String instToString(int[] inst){
+		String instance = "";
+		for(int feature : inst){
+			instance += feature + ",";
+		}
+		return instance;
+	}
+	
+	/**
+	 * Prints cluster set
+	 */
+	public static void printClusters(){
+		System.out.println("Clusters:");
+		for(int[] cluster : clusters){
+			System.out.println(instToString(cluster));
+		}
+	}
+	
 	
 	/**** Unit Tests ****/
 
@@ -151,16 +205,22 @@ public class Kmeans {
 		testData.clear();
 	}
 	
-	//TODO
+	/**
+	 * Tests initializeClusters() method
+	 * @param k: number of clusters to be initialized
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testInitializeClusters(int k){
 		System.out.println("Testing cluster initialization...");
 		
 		initializeClusters(k);
+		//test initialization size
 		if(clusters.length != k){
 			System.err.println("Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
 			return false;
 		}
 		
+		//test two random cluster centers for equivalence
 		int rand1 = new Random().nextInt(clusters.length);
 		int rand2;
 		do rand2 = new Random().nextInt(clusters.length);
@@ -177,6 +237,33 @@ public class Kmeans {
 		}
 		
 		System.out.println("Cluster initialization tests pass! :)\n");
+		return true;
+	}
+	
+	/**
+	 * Tests assignCluster() method
+	 * @param verbose: whether testing should print extra information
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testAssignCluster(boolean verbose){
+		System.out.println("Testing cluster assignment...");
+		
+		if(verbose) printClusters();
+		
+		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		int clust = assignCluster(inst1);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst1) + "\nCluster: " + clust);
+		
+		int[] inst2 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		clust = assignCluster(inst2);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst2) + "\nCluster: " + clust);
+		
+		int[] inst3 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		clust = assignCluster(inst3);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst3) + "\nCluster: " + clust);
+		
+		
+		System.out.println("Cluster assignment tests pass! :)\n");
 		return true;
 	}
 	
@@ -286,6 +373,7 @@ public class Kmeans {
 		clearData();
 		if(!testExtractData(trainFile, testFile)) return false;
 		if(!testInitializeClusters(k)) return false;
+		if(!testAssignCluster(verbose)) return false;
 		if(!testUpdateClusters()) return false;
 		if(!testCalculateSSE()) return false;
 		if(!testCalculateSSS()) return false;
