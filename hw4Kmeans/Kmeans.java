@@ -94,17 +94,47 @@ public class Kmeans {
 		return bestcl;
 	}
 	
-	//TODO
-	public static double updateClusters(){
+	/**
+	 * Updates each cluster center by averaging feature values of its members
+	 * @return: returns the average amount the clusters moved
+	 */
+	public static double updateClusters(boolean test){
 		double var = 0.0;
-		ArrayList[] clustmembers = new ArrayList[clusters.length];
+		ArrayList<ArrayList<Integer>> clustmembers = new ArrayList<ArrayList<Integer>>();
 		
-		for(int[] inst : trainData){
-			//classify each instance, adding its index to the appropriate cluster
+		//initialize cluster ArrayLists
+		for(int i = 0; i < clusters.length; i++){
+			clustmembers.add(new ArrayList<Integer>());
+		}		
+		
+		//classify each instance, adding its index to the appropriate cluster
+		for(int i = 0; i < trainData.size(); i++){
+			int clustasmt = assignCluster(trainData.get(i));
+			clustmembers.get(clustasmt).add(i);
 		}
 		
-		//return amount of variance from previous cluster set
-		return var;
+		//iterate through the clusters, averaging each's members to obtain the new cluster center
+		for(int i = 0; i < clustmembers.size(); i++){
+			if(test){
+				System.out.println("Cluster: " + instToString(clusters[i]));
+				//for(int node : clustmembers.get(i)) System.out.println("Inst: " + instToString(trainData.get(node)));
+			}
+			
+			for(int j = 0; j < clusters[i].length; j++){			//iterate through each feature
+				double avg = 0.0;
+				for(int node : clustmembers.get(i)){				//pull out each member's feature value for averaging
+					avg += trainData.get(node)[j];
+				}
+				int newclustfeat = (int)Math.round(avg/clustmembers.get(i).size());
+				var += (Math.abs(newclustfeat - clusters[i][j]));	//add up variance from each feature change
+				clusters[i][j] = newclustfeat;
+			}
+
+			if(test) System.out.println("New cluster: " + instToString(clusters[i]));
+		}
+		
+		//return amount of variance from previous cluster set - average across all features of all clusters
+		return var/clusters.length/clusters[0].length;
 	}
 	
 	//TODO
@@ -137,7 +167,7 @@ public class Kmeans {
 		for(int i = 0; i < 5; i++){
 			initializeClusters(k);
 			for(int j = 0; j < itCap; j++){
-				if(updateClusters() < thresh) break;	//until cluster centers stop moving, update centers
+				if(updateClusters(false) < thresh) break;	//until cluster centers stop moving, update centers
 			}
 			double newSSE = calculateSSE();
 			if(newSSE < SSE){
@@ -168,10 +198,10 @@ public class Kmeans {
 		
 		if(!runTests(true, trainFile, testFile, k)) System.exit(0);
 		
-		extractData(trainFile, TRAIN);
-		bestIteration(k);
-		extractData(testFile, TEST);
-		classifyData();
+		//extractData(trainFile, TRAIN);
+		//bestIteration(k);
+		//extractData(testFile, TEST);
+		//classifyData();
 	}
 	
 	/**** Printing Methods ****/
@@ -267,9 +297,15 @@ public class Kmeans {
 		return true;
 	}
 	
-	//TODO
-	public static boolean testUpdateClusters(){
+	/**
+	 * Tests updateClusters() method
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testUpdateClusters(boolean verbose){
 		System.out.println("Testing cluster updates...");
+		
+		double var = updateClusters(verbose);
+		System.out.println("Average variance: " + var);
 		
 		System.out.println("Cluster update tests pass! :)\n");
 		return true;
@@ -374,7 +410,7 @@ public class Kmeans {
 		if(!testExtractData(trainFile, testFile)) return false;
 		if(!testInitializeClusters(k)) return false;
 		if(!testAssignCluster(verbose)) return false;
-		if(!testUpdateClusters()) return false;
+		if(!testUpdateClusters(verbose)) return false;
 		if(!testCalculateSSE()) return false;
 		if(!testCalculateSSS()) return false;
 		if(!testCalculateMEntropy()) return false;
