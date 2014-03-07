@@ -139,6 +139,27 @@ public class Kmeans {
 	}
 	
 	/**
+	 * Calculates the squared error between two instances
+	 * @param inst1: first instance to be used for calculation
+	 * @param inst2: second instance to be used for calculation
+	 * @return: returns the total squared error between the two instances
+	 */
+	public static long calculateSqErr(int[] inst1, int[] inst2){
+		if(inst1.length != inst2.length){
+			System.err.println("Two instances must be of the same size: " + inst1.length + " vs. " + inst2.length);
+			System.exit(0);
+		}
+		
+		long sqErr = 0;
+		
+		for(int i = 0; i < inst1.length; i++){
+			sqErr += Math.pow(inst1[i] - inst2[i], 2);
+		}
+		
+		return sqErr;
+	}
+	
+	/**
 	 * Calculates the current sum-squared error
 	 * @param test: if this method is being tested
 	 * @return: returns the SSE value
@@ -147,12 +168,10 @@ public class Kmeans {
 		long SSE = 0;
 		
 		for(int i = 0; i < clusters.length; i++){					//for each cluster
-			//if(test) System.out.println("SSE cluster: " + instToString(clusters[i]));
+			if(test) System.out.println("SSE cluster: " + instToString(clusters[i]));
 			for(int memb : clustMembs.get(i)){						//for each cluster member
-				//if(test) System.out.println("SSE inst: " + instToString(trainData.get(memb)));
-				for(int j = 0; j < clusters[i].length; j++){		//for each feature
-					SSE += Math.pow(trainData.get(memb)[j] - clusters[i][j], 2);
-				}
+				if(test) System.out.println("SSE inst: " + instToString(trainData.get(memb)));
+				SSE += calculateSqErr(trainData.get(memb), clusters[i]);
 			}
 		}
 		
@@ -160,8 +179,8 @@ public class Kmeans {
 	}
 	
 	//TODO
-	public static double calculateSSS(){
-		double SSS = 0.0;
+	public static long calculateSSS(boolean test){
+		long SSS = 0;
 		
 		return SSS;
 	}
@@ -190,7 +209,7 @@ public class Kmeans {
 				//maintain cluster set
 			}
 		}
-		double SSS = calculateSSS();
+		long SSS = calculateSSS(false);
 		double mEntropy = calculateMEntropy();
 	}
 	
@@ -328,6 +347,38 @@ public class Kmeans {
 		return true;
 	}
 	
+	public static boolean testCalculateSqErr(){
+		System.out.println("Testing squared error calculation...");
+		
+		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		int[] inst2 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		
+		long sqErr = calculateSqErr(inst1, inst2);
+		if(sqErr != 0){
+			System.err.println("Squared error across two identical instances should be 0: " + sqErr);
+			return false;
+		}
+		
+		int[] inst3 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		sqErr = calculateSqErr(inst1, inst3);
+		
+		if(sqErr != 3412){
+			System.err.println("Squared error should be 3412: " + sqErr);
+			return false;
+		}
+		
+		int[] inst4 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		sqErr = calculateSqErr(inst1, inst4);
+
+		if(sqErr != 2479){
+			System.err.println("Squared error should be 2479: " + sqErr);
+			return false;
+		}
+		
+		System.out.println("Squared error calculation tests pass! :)\n");
+		return true;
+	}
+	
 	/**
 	 * Tests calculateSSE() method
 	 * @param verbose: print extra test info
@@ -344,8 +395,10 @@ public class Kmeans {
 	}
 	
 	//TODO
-	public static boolean testCalculateSSS(){
+	public static boolean testCalculateSSS(boolean verbose){
 		System.out.println("Testing SSS calculation...");
+		
+		long SSS = calculateSSS(verbose);
 		
 		System.out.println("SSS calculation tests pass! :)\n");
 		return true;
@@ -435,8 +488,9 @@ public class Kmeans {
 		if(!testInitializeClusters(k)) return false;
 		if(!testAssignCluster(verbose)) return false;
 		if(!testUpdateClusters(verbose)) return false;
-		if(!testCalculateSSE(verbose)) return false;
-		if(!testCalculateSSS()) return false;
+		if(!testCalculateSqErr()) return false;
+		if(!testCalculateSSE(false)) return false;
+		if(!testCalculateSSS(verbose)) return false;
 		if(!testCalculateMEntropy()) return false;
 		if(!testBestIteration(k)) return false;
 		if(!testClassifyData()) return false;
