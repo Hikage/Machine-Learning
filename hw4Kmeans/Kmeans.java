@@ -18,6 +18,7 @@ public class Kmeans {
 	private static ArrayList<int[]> trainData = new ArrayList<int[]>();
 	private static ArrayList<int[]> testData = new ArrayList<int[]>();
 	private static int[][] clusters;
+	private static ArrayList<ArrayList<Integer>> clustMembs = new ArrayList<ArrayList<Integer>>();
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
 	
@@ -96,25 +97,25 @@ public class Kmeans {
 	
 	/**
 	 * Updates each cluster center by averaging feature values of its members
+	 * @param test: if this method is being tested
 	 * @return: returns the average amount the clusters moved
 	 */
 	public static double updateClusters(boolean test){
 		double var = 0.0;
-		ArrayList<ArrayList<Integer>> clustmembers = new ArrayList<ArrayList<Integer>>();
 		
 		//initialize cluster ArrayLists
 		for(int i = 0; i < clusters.length; i++){
-			clustmembers.add(new ArrayList<Integer>());
+			clustMembs.add(new ArrayList<Integer>());
 		}		
 		
 		//classify each instance, adding its index to the appropriate cluster
 		for(int i = 0; i < trainData.size(); i++){
-			int clustasmt = assignCluster(trainData.get(i));
-			clustmembers.get(clustasmt).add(i);
+			int clustAsmt = assignCluster(trainData.get(i));
+			clustMembs.get(clustAsmt).add(i);
 		}
 		
 		//iterate through the clusters, averaging each's members to obtain the new cluster center
-		for(int i = 0; i < clustmembers.size(); i++){
+		for(int i = 0; i < clustMembs.size(); i++){
 			if(test){
 				System.out.println("Cluster: " + instToString(clusters[i]));
 				//for(int node : clustmembers.get(i)) System.out.println("Inst: " + instToString(trainData.get(node)));
@@ -122,12 +123,12 @@ public class Kmeans {
 			
 			for(int j = 0; j < clusters[i].length; j++){			//iterate through each feature
 				double avg = 0.0;
-				for(int node : clustmembers.get(i)){				//pull out each member's feature value for averaging
+				for(int node : clustMembs.get(i)){				//pull out each member's feature value for averaging
 					avg += trainData.get(node)[j];
 				}
-				int newclustfeat = (int)Math.round(avg/clustmembers.get(i).size());
-				var += (Math.abs(newclustfeat - clusters[i][j]));	//add up variance from each feature change
-				clusters[i][j] = newclustfeat;
+				int newClustFeat = (int)Math.round(avg/clustMembs.get(i).size());
+				var += (Math.abs(newClustFeat - clusters[i][j]));	//add up variance from each feature change
+				clusters[i][j] = newClustFeat;
 			}
 
 			if(test) System.out.println("New cluster: " + instToString(clusters[i]));
@@ -137,9 +138,23 @@ public class Kmeans {
 		return var/clusters.length/clusters[0].length;
 	}
 	
-	//TODO
-	public static double calculateSSE(){
-		double SSE = 0.0;
+	/**
+	 * Calculates the current sum-squared error
+	 * @param test: if this method is being tested
+	 * @return: returns the SSE value
+	 */
+	public static long calculateSSE(boolean test){
+		long SSE = 0;
+		
+		for(int i = 0; i < clusters.length; i++){					//for each cluster
+			//if(test) System.out.println("SSE cluster: " + instToString(clusters[i]));
+			for(int memb : clustMembs.get(i)){						//for each cluster member
+				//if(test) System.out.println("SSE inst: " + instToString(trainData.get(memb)));
+				for(int j = 0; j < clusters[i].length; j++){		//for each feature
+					SSE += Math.pow(trainData.get(memb)[j] - clusters[i][j], 2);
+				}
+			}
+		}
 		
 		return SSE;
 	}
@@ -169,7 +184,7 @@ public class Kmeans {
 			for(int j = 0; j < itCap; j++){
 				if(updateClusters(false) < thresh) break;	//until cluster centers stop moving, update centers
 			}
-			double newSSE = calculateSSE();
+			double newSSE = calculateSSE(false);
 			if(newSSE < SSE){
 				SSE = newSSE;
 				//maintain cluster set
@@ -233,6 +248,7 @@ public class Kmeans {
 	public static void clearData(){
 		trainData.clear();
 		testData.clear();
+		clustMembs.clear();
 	}
 	
 	/**
@@ -262,7 +278,7 @@ public class Kmeans {
 			if(!equals) break;
 		}
 		if(equals){
-			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2);
+			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2 + ")");
 			return false;
 		}
 		
@@ -299,6 +315,7 @@ public class Kmeans {
 	
 	/**
 	 * Tests updateClusters() method
+	 * @param verbose: print extra test info
 	 * @return: always returns true (manual/printing verification)
 	 */
 	public static boolean testUpdateClusters(boolean verbose){
@@ -311,9 +328,16 @@ public class Kmeans {
 		return true;
 	}
 	
-	//TODO
-	public static boolean testCalculateSSE(){
+	/**
+	 * Tests calculateSSE() method
+	 * @param verbose: print extra test info
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testCalculateSSE(boolean verbose){
 		System.out.println("Testing SSE calculation...");
+		
+		long SSE = calculateSSE(verbose);
+		System.out.println("SSE: " + SSE);
 		
 		System.out.println("SSE calculation tests pass! :)\n");
 		return true;
@@ -411,7 +435,7 @@ public class Kmeans {
 		if(!testInitializeClusters(k)) return false;
 		if(!testAssignCluster(verbose)) return false;
 		if(!testUpdateClusters(verbose)) return false;
-		if(!testCalculateSSE()) return false;
+		if(!testCalculateSSE(verbose)) return false;
 		if(!testCalculateSSS()) return false;
 		if(!testCalculateMEntropy()) return false;
 		if(!testBestIteration(k)) return false;
