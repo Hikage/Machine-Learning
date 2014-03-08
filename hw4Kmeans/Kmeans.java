@@ -12,6 +12,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 public class Kmeans {
@@ -19,6 +22,8 @@ public class Kmeans {
 	private static ArrayList<int[]> testData = new ArrayList<int[]>();
 	private static int[][] clusters;
 	private static ArrayList<ArrayList<Integer>> clustMembs = new ArrayList<ArrayList<Integer>>();
+	//number of clusters<number of classification types<number of instances>>
+	private static ArrayList<HashMap<Integer, Integer>> clustClass = new ArrayList<HashMap<Integer, Integer>>();
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
 	
@@ -106,13 +111,24 @@ public class Kmeans {
 		//initialize cluster ArrayLists
 		for(int i = 0; i < clusters.length; i++){
 			clustMembs.add(new ArrayList<Integer>());
+			clustClass.add(new HashMap<Integer, Integer>());
 		}		
 		
 		//classify each instance, adding its index to the appropriate cluster
 		for(int i = 0; i < trainData.size(); i++){
 			int clustAsmt = assignCluster(trainData.get(i));
 			clustMembs.get(clustAsmt).add(i);
+			
+			//keep track of how many instances per class are in each cluster
+			int clsif = trainData.get(i)[trainData.get(i).length-1];
+			if(clustClass.get(clustAsmt).containsKey(clsif))
+				clustClass.get(clustAsmt).put(clsif, clustClass.get(clustAsmt).get(clsif) + 1);
+			else clustClass.get(clustAsmt).put(clsif, 1);
+			
+			//if(test) System.out.println(instToString(trainData.get(i)) + ": " + clustAsmt + "[" + clsif + "]" + clustClass.get(clustAsmt).get(clsif));
 		}
+		
+		//if(test) System.out.println();
 		
 		//iterate through the clusters, averaging each's members to obtain the new cluster center
 		for(int i = 0; i < clustMembs.size(); i++){
@@ -183,6 +199,7 @@ public class Kmeans {
 	/**
 	 * Calculates sum-squared separation:
 	 * 		sum of sqErrs between all distinct pairs of clusters
+	 * @param test: if this method is being tested
 	 * @return: returns the sum-squared separation value
 	 */
 	public static long calculateSSS(boolean test){
@@ -198,16 +215,39 @@ public class Kmeans {
 		return SSS;
 	}
 	
-	//TODO
-	public static double calculateEntropy(){
+	/**
+	 * Calculates the entropy for a specified cluster
+	 * 		probability * log2(probability)
+	 * 		(probability = instances in classification/total instances in cluster)
+	 * @param clust: cluster for which to have entropy calculated
+	 * @param test: if this method is being tested
+	 * @return
+	 */
+	public static double calculateEntropy(int clust, boolean test){
 		double entropy = 0.0;
 		
-		return entropy;
+		HashMap<Integer, Integer> clsifCt = clustClass.get(clust);
+		double ttlCt = 0;
+		for(Map.Entry<Integer, Integer> cursor : clsifCt.entrySet()){
+			ttlCt += cursor.getValue();
+		}
+		
+		for(Map.Entry<Integer, Integer> cursor : clsifCt.entrySet()){
+			double prob = cursor.getValue()/ttlCt;
+			entropy += prob * (Math.log(prob)/Math.log(2));
+			if(test) System.out.println("Class count: " + cursor.getValue() + "; total: " + ttlCt + "; prob: " + prob + "; entropy: " + entropy);
+		}
+		
+		return entropy * -1;
 	}
 	
 	//TODO
 	public static double calculateMEntropy(){
 		double mEntropy = 0.0;
+		
+		for(HashMap<Integer, Integer> clsifCt : clustClass){
+			
+		}
 		
 		return mEntropy;
 	}
@@ -288,6 +328,7 @@ public class Kmeans {
 		trainData.clear();
 		testData.clear();
 		clustMembs.clear();
+		clustClass.clear();
 	}
 	
 	/**
@@ -357,13 +398,24 @@ public class Kmeans {
 	/**
 	 * Tests updateClusters() method
 	 * @param verbose: print extra test info
-	 * @return: always returns true (manual/printing verification)
+	 * @return: returns true if all tests pass (includes manual/printing verification)
 	 */
 	public static boolean testUpdateClusters(boolean verbose){
 		System.out.println("Testing cluster updates...");
 		
 		double var = updateClusters(verbose);
 		System.out.println("Average variance: " + var);
+		
+		int ttlCt = 0;
+		for(HashMap<Integer, Integer> clustCt : clustClass){
+			for(Map.Entry<Integer, Integer> cursor : clustCt.entrySet()){
+				ttlCt += cursor.getValue();
+			}
+		}
+		if(ttlCt != trainData.size()){
+			System.err.println("Instance mismatch between classification (" + ttlCt + ") and original training data (" + trainData.size() + ")");
+			return false;
+		}
 		
 		System.out.println("Cluster update tests pass! :)\n");
 		return true;
@@ -440,6 +492,21 @@ public class Kmeans {
 		return true;
 	}
 	
+	/**
+	 * Tests calculateEntropy() method
+	 * @param verbose: if extra test info should be printed
+	 * @return: always returns true (manual/printing validation)
+	 */
+	public static boolean testCalculateEntropy(boolean verbose){
+		System.out.println("Testing entropy calculation...");
+		
+		double entropy = calculateEntropy(0, verbose);
+		System.out.println("Entropy: " + entropy);
+		
+		System.out.println("Entropy calculation tests pass! :)\n");
+		return true;
+	}
+		
 	//TODO
 	public static boolean testCalculateMEntropy(){
 		System.out.println("Testing mean entropy calculation...");
@@ -527,6 +594,7 @@ public class Kmeans {
 		if(!testCalculateSqErr()) return false;
 		if(!testCalculateSSE(false)) return false;
 		if(!testCalculateSSS(verbose)) return false;
+		if(!testCalculateEntropy(verbose)) return false;
 		if(!testCalculateMEntropy()) return false;
 		if(!testBestIteration(k)) return false;
 		if(!testClassifyData()) return false;
