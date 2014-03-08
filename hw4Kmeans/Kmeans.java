@@ -81,7 +81,7 @@ public class Kmeans {
 		//calculate the euclidean distance for each cluster center to find the closest
 		for(int i = 0; i < clusters.length; i++){
 			double eudist = 0.0;
-			for(int j = 0; j < clusters[0].length; j++){
+			for(int j = 0; j < clusters[0].length-1; j++){
 				eudist += Math.pow(inst[j] - clusters[i][j], 2);
 			}
 			eudist = Math.sqrt(eudist);
@@ -121,9 +121,9 @@ public class Kmeans {
 				//for(int node : clustmembers.get(i)) System.out.println("Inst: " + instToString(trainData.get(node)));
 			}
 			
-			for(int j = 0; j < clusters[i].length; j++){			//iterate through each feature
+			for(int j = 0; j < clusters[i].length-1; j++){			//iterate through each feature (last value is classification)
 				double avg = 0.0;
-				for(int node : clustMembs.get(i)){				//pull out each member's feature value for averaging
+				for(int node : clustMembs.get(i)){					//pull out each member's feature value for averaging
 					avg += trainData.get(node)[j];
 				}
 				int newClustFeat = (int)Math.round(avg/clustMembs.get(i).size());
@@ -135,7 +135,7 @@ public class Kmeans {
 		}
 		
 		//return amount of variance from previous cluster set - average across all features of all clusters
-		return var/clusters.length/clusters[0].length;
+		return var/clusters.length/(clusters[0].length-1);
 	}
 	
 	/**
@@ -153,7 +153,7 @@ public class Kmeans {
 		
 		long sqErr = 0;
 		
-		for(int i = 0; i < inst1.length; i++){
+		for(int i = 0; i < inst1.length-1; i++){
 			sqErr += Math.pow(inst1[i] - inst2[i], 2);
 		}
 		
@@ -181,7 +181,7 @@ public class Kmeans {
 	}
 	
 	/**
-	 * Calulates sum-squared separation:
+	 * Calculates sum-squared separation:
 	 * 		sum of sqErrs between all distinct pairs of clusters
 	 * @return: returns the sum-squared separation value
 	 */
@@ -196,6 +196,13 @@ public class Kmeans {
 		}
 		
 		return SSS;
+	}
+	
+	//TODO
+	public static double calculateEntropy(){
+		double entropy = 0.0;
+		
+		return entropy;
 	}
 	
 	//TODO
@@ -382,16 +389,16 @@ public class Kmeans {
 		int[] inst3 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
 		sqErr = calculateSqErr(inst1, inst3);
 		
-		if(sqErr != 3412){
-			System.err.println("Squared error should be 3412: " + sqErr);
+		if(sqErr != 3387){
+			System.err.println("Squared error should be 3387: " + sqErr);
 			return false;
 		}
 		
 		int[] inst4 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
 		sqErr = calculateSqErr(inst1, inst4);
 
-		if(sqErr != 2479){
-			System.err.println("Squared error should be 2479: " + sqErr);
+		if(sqErr != 2478){
+			System.err.println("Squared error should be 2478: " + sqErr);
 			return false;
 		}
 		
