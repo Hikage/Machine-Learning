@@ -139,7 +139,8 @@ public class Kmeans {
 	}
 	
 	/**
-	 * Calculates the squared error between two instances
+	 * Calculates the squared error between two instances:
+	 * 		(member - cluster)^2
 	 * @param inst1: first instance to be used for calculation
 	 * @param inst2: second instance to be used for calculation
 	 * @return: returns the total squared error between the two instances
@@ -160,7 +161,8 @@ public class Kmeans {
 	}
 	
 	/**
-	 * Calculates the current sum-squared error
+	 * Calculates the current sum-squared error:
+	 * 		sum of all sqErrs between members and their clusters
 	 * @param test: if this method is being tested
 	 * @return: returns the SSE value
 	 */
@@ -178,9 +180,20 @@ public class Kmeans {
 		return SSE;
 	}
 	
-	//TODO
+	/**
+	 * Calulates sum-squared separation:
+	 * 		sum of sqErrs between all distinct pairs of clusters
+	 * @return: returns the sum-squared separation value
+	 */
 	public static long calculateSSS(boolean test){
 		long SSS = 0;
+		
+		for(int i = 0; i < clusters.length; i++){
+			for(int j = i+1; j < clusters.length; j++){
+				SSS += calculateSqErr(clusters[i], clusters[j]);
+				if(test) System.out.println(i + " & " + j + ": " + SSS);
+			}
+		}
 		
 		return SSS;
 	}
@@ -305,6 +318,7 @@ public class Kmeans {
 		return true;
 	}
 	
+	
 	/**
 	 * Tests assignCluster() method
 	 * @param verbose: whether testing should print extra information
@@ -332,6 +346,7 @@ public class Kmeans {
 		return true;
 	}
 	
+	
 	/**
 	 * Tests updateClusters() method
 	 * @param verbose: print extra test info
@@ -347,6 +362,11 @@ public class Kmeans {
 		return true;
 	}
 	
+	
+	/**
+	 * Tests calculateSqErr() method
+	 * @return: returns true if all tests pass
+	 */
 	public static boolean testCalculateSqErr(){
 		System.out.println("Testing squared error calculation...");
 		
@@ -379,6 +399,7 @@ public class Kmeans {
 		return true;
 	}
 	
+	
 	/**
 	 * Tests calculateSSE() method
 	 * @param verbose: print extra test info
@@ -394,11 +415,19 @@ public class Kmeans {
 		return true;
 	}
 	
-	//TODO
+	
+	/**
+	 * Tests calculateSSS() method
+	 * @param verbose: if additional testing information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
 	public static boolean testCalculateSSS(boolean verbose){
 		System.out.println("Testing SSS calculation...");
 		
+		if(verbose) printClusters();
+		
 		long SSS = calculateSSS(verbose);
+		System.out.println(SSS);
 		
 		System.out.println("SSS calculation tests pass! :)\n");
 		return true;
