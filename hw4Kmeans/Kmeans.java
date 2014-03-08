@@ -13,7 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -241,12 +240,21 @@ public class Kmeans {
 		return entropy * -1;
 	}
 	
-	//TODO
-	public static double calculateMEntropy(){
+	/**
+	 * Calculates the mean entropy for all clusters
+	 * 		sum of (instances in cluster/total instances) * cluster entropy
+	 * @param test: if the method is being tested
+	 * @return: returns the mean entropy value
+	 */
+	public static double calculateMEntropy(boolean test){
 		double mEntropy = 0.0;
+		double ttlInst = trainData.size();
 		
-		for(HashMap<Integer, Integer> clsifCt : clustClass){
-			
+		for(int i = 0; i < clustClass.size(); i++){
+			int instInClust = clustMembs.get(i).size();
+			double entropy = calculateEntropy(i, false);
+			mEntropy += (instInClust/ttlInst * entropy);
+			if(test) System.out.println("+" + instInClust + "/" + ttlInst + "*" + entropy + " = " + mEntropy);
 		}
 		
 		return mEntropy;
@@ -270,7 +278,7 @@ public class Kmeans {
 			}
 		}
 		long SSS = calculateSSS(false);
-		double mEntropy = calculateMEntropy();
+		double mEntropy = calculateMEntropy(false);
 	}
 	
 	//TODO
@@ -421,7 +429,6 @@ public class Kmeans {
 		return true;
 	}
 	
-	
 	/**
 	 * Tests calculateSqErr() method
 	 * @return: returns true if all tests pass
@@ -492,6 +499,7 @@ public class Kmeans {
 		return true;
 	}
 	
+
 	/**
 	 * Tests calculateEntropy() method
 	 * @param verbose: if extra test info should be printed
@@ -507,9 +515,17 @@ public class Kmeans {
 		return true;
 	}
 		
-	//TODO
-	public static boolean testCalculateMEntropy(){
+
+	/**
+	 * Tests calculateMEntropy() method
+	 * @param verbose: if extra test info should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testCalculateMEntropy(boolean verbose){
 		System.out.println("Testing mean entropy calculation...");
+		
+		double mEntropy = calculateMEntropy(verbose);
+		System.out.println("Mean entropy: " + mEntropy);
 		
 		System.out.println("Mean entropy calculation tests pass! :)\n");
 		return true;
@@ -595,7 +611,7 @@ public class Kmeans {
 		if(!testCalculateSSE(false)) return false;
 		if(!testCalculateSSS(verbose)) return false;
 		if(!testCalculateEntropy(verbose)) return false;
-		if(!testCalculateMEntropy()) return false;
+		if(!testCalculateMEntropy(verbose)) return false;
 		if(!testBestIteration(k)) return false;
 		if(!testClassifyData()) return false;
 		return true;
