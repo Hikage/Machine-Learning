@@ -21,7 +21,6 @@ public class Kmeans {
 	private static ArrayList<int[]> testData = new ArrayList<int[]>();
 	private static int[][] clusters;
 	private static ArrayList<ArrayList<Integer>> clustMembs = new ArrayList<ArrayList<Integer>>();
-	//number of clusters<number of classification types<number of instances>>
 	private static ArrayList<HashMap<Integer, Integer>> clustClass = new ArrayList<HashMap<Integer, Integer>>();
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
@@ -65,6 +64,10 @@ public class Kmeans {
 	 * @param k: number of clusters to initialize
 	 */
 	public static void initializeClusters(int k){
+		if(trainData.isEmpty()){
+			System.err.println("Training data has not yet been extracted");
+			System.exit(0);
+		}
 		clusters = new int[k][trainData.get(0).length];
 		
 		for(int i = 0; i < k; i++){
@@ -79,6 +82,11 @@ public class Kmeans {
 	 * @return: returns the index of the closest cluster center
 	 */
 	public static int assignCluster(int[] inst){
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
+		
 		int bestcl = 0;
 		double besteudist = Double.POSITIVE_INFINITY;
 		
@@ -100,14 +108,22 @@ public class Kmeans {
 	}
 	
 	/**
-	 * Updates each cluster center by averaging feature values of its members
-	 * @param test: if this method is being tested
-	 * @return: returns the average amount the clusters moved
+	 * Clusters data
+	 * @param test: if the method is being tested
 	 */
-	public static double updateClusters(boolean test){
-		double var = 0.0;
+	public static void clusterData(boolean test){
+		if(trainData.isEmpty()){
+			System.err.println("Training data has not yet been extracted");
+			System.exit(0);
+		}
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
 		
 		//initialize cluster ArrayLists
+		clustMembs.clear();
+		clustClass.clear();
 		for(int i = 0; i < clusters.length; i++){
 			clustMembs.add(new ArrayList<Integer>());
 			clustClass.add(new HashMap<Integer, Integer>());
@@ -124,10 +140,29 @@ public class Kmeans {
 				clustClass.get(clustAsmt).put(clsif, clustClass.get(clustAsmt).get(clsif) + 1);
 			else clustClass.get(clustAsmt).put(clsif, 1);
 			
-			//if(test) System.out.println(instToString(trainData.get(i)) + ": " + clustAsmt + "[" + clsif + "]" + clustClass.get(clustAsmt).get(clsif));
+			if(test) System.out.println(instToString(trainData.get(i)) + ": " + clustAsmt + "[" + clsif + "]" + clustClass.get(clustAsmt).get(clsif));
+		}		
+		if(test) System.out.println();
+	}
+	
+	/**
+	 * Updates each cluster center by averaging feature values of its members
+	 * @param test: if this method is being tested
+	 * @return: returns the average amount the clusters moved
+	 */
+	public static double updateClusters(boolean test){
+		if(trainData.isEmpty()){
+			System.err.println("Training data has not yet been extracted");
+			System.exit(0);
+		}
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
 		}
 		
-		//if(test) System.out.println();
+		double var = 0.0;
+		
+		clusterData(false);
 		
 		//iterate through the clusters, averaging each's members to obtain the new cluster center
 		for(int i = 0; i < clustMembs.size(); i++){
@@ -148,6 +183,7 @@ public class Kmeans {
 
 			if(test) System.out.println("New cluster: " + instToString(clusters[i]));
 		}
+		if(test) System.out.println();
 		
 		//return amount of variance from previous cluster set - average across all features of all clusters
 		return var/clusters.length/(clusters[0].length-1);
@@ -182,6 +218,19 @@ public class Kmeans {
 	 * @return: returns the SSE value
 	 */
 	public static long calculateSSE(boolean test){
+		if(trainData.isEmpty()){
+			System.err.println("Training data has not yet been extracted");
+			System.exit(0);
+		}
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
+		if(clustMembs.isEmpty()){
+			System.err.println("Training data has not yet been classified");
+			System.exit(0);
+		}
+		
 		long SSE = 0;
 		
 		for(int i = 0; i < clusters.length; i++){					//for each cluster
@@ -202,6 +251,11 @@ public class Kmeans {
 	 * @return: returns the sum-squared separation value
 	 */
 	public static long calculateSSS(boolean test){
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
+		
 		long SSS = 0;
 		
 		for(int i = 0; i < clusters.length; i++){
@@ -223,6 +277,11 @@ public class Kmeans {
 	 * @return
 	 */
 	public static double calculateEntropy(int clust, boolean test){
+		if(clustClass.isEmpty()){
+			System.err.println("Cluster classifications have not yet been counted");
+			System.exit(0);
+		}
+		
 		double entropy = 0.0;
 		
 		HashMap<Integer, Integer> clsifCt = clustClass.get(clust);
@@ -247,6 +306,19 @@ public class Kmeans {
 	 * @return: returns the mean entropy value
 	 */
 	public static double calculateMEntropy(boolean test){
+		if(trainData.isEmpty()){
+			System.err.println("Training data has not yet been extracted");
+			System.exit(0);
+		}
+		if(clustMembs.isEmpty()){
+			System.err.println("Training data has not yet been classified");
+			System.exit(0);
+		}
+		if(clustClass.isEmpty()){
+			System.err.println("Cluster classifications have not yet been counted");
+			System.exit(0);
+		}
+		
 		double mEntropy = 0.0;
 		double ttlInst = trainData.size();
 		
@@ -260,13 +332,25 @@ public class Kmeans {
 		return mEntropy;
 	}
 	
-	//TODO
-	public static void bestIteration(int k){
-		int itCap = 100;
-		double thresh = 1.0;
+	/**
+	 * Iterates with multiple cluster center seeds to find the best
+	 * @param k: number of clusters
+	 * @param test: if the method is being tested
+	 */
+	public static void bestIteration(int k, boolean test){
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
 		
-		double SSE = 0.0;
-		for(int i = 0; i < 5; i++){
+		int itCap = 10000;									//set an iteration cap to prevent infinite looping
+		double thresh = 0.01;								//threshold for cluster movement convergence
+		int numIterations = 5;								//number of iterations to run
+		
+		double SSE = Double.POSITIVE_INFINITY;
+		int[][] bestClusts = clusters.clone();
+		
+		for(int i = 0; i < numIterations; i++){
 			initializeClusters(k);
 			for(int j = 0; j < itCap; j++){
 				if(updateClusters(false) < thresh) break;	//until cluster centers stop moving, update centers
@@ -274,11 +358,17 @@ public class Kmeans {
 			double newSSE = calculateSSE(false);
 			if(newSSE < SSE){
 				SSE = newSSE;
-				//maintain cluster set
+				if(test) System.out.println("New SSE: " + SSE);
+				bestClusts = clusters.clone();
 			}
 		}
+		clusters = bestClusts.clone();						//keep the best iteration's cluster set
+		clusterData(false);									//re-cluster data for final calculations
 		long SSS = calculateSSS(false);
 		double mEntropy = calculateMEntropy(false);
+		
+		if(test) printClusters();
+		System.out.println("SSE: " + SSE + "; SSS: " + SSS + "; Mean Entropy: " + mEntropy);
 	}
 	
 	//TODO
@@ -320,6 +410,11 @@ public class Kmeans {
 	 * Prints cluster set
 	 */
 	public static void printClusters(){
+		if(clusters.length == 0){
+			System.err.println("Clusters have not yet been initiated");
+			System.exit(0);
+		}
+		
 		System.out.println("Clusters:");
 		for(int[] cluster : clusters){
 			System.out.println(instToString(cluster));
@@ -337,206 +432,6 @@ public class Kmeans {
 		testData.clear();
 		clustMembs.clear();
 		clustClass.clear();
-	}
-	
-	/**
-	 * Tests initializeClusters() method
-	 * @param k: number of clusters to be initialized
-	 * @return: returns true if all tests pass
-	 */
-	public static boolean testInitializeClusters(int k){
-		System.out.println("Testing cluster initialization...");
-		
-		initializeClusters(k);
-		//test initialization size
-		if(clusters.length != k){
-			System.err.println("Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
-			return false;
-		}
-		
-		//test two random cluster centers for equivalence
-		int rand1 = new Random().nextInt(clusters.length);
-		int rand2;
-		do rand2 = new Random().nextInt(clusters.length);
-		while(rand1 == rand2);
-		
-		boolean equals = true;
-		for(int i = 0; i < clusters[rand1].length; i++){
-			equals = equals && (clusters[rand2][i] == clusters[1][i]);
-			if(!equals) break;
-		}
-		if(equals){
-			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2 + ")");
-			return false;
-		}
-		
-		System.out.println("Cluster initialization tests pass! :)\n");
-		return true;
-	}
-	
-	
-	/**
-	 * Tests assignCluster() method
-	 * @param verbose: whether testing should print extra information
-	 * @return: returns true if all tests pass
-	 */
-	public static boolean testAssignCluster(boolean verbose){
-		System.out.println("Testing cluster assignment...");
-		
-		if(verbose) printClusters();
-		
-		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
-		int clust = assignCluster(inst1);
-		if(verbose) System.out.println("\nInstance: " + instToString(inst1) + "\nCluster: " + clust);
-		
-		int[] inst2 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
-		clust = assignCluster(inst2);
-		if(verbose) System.out.println("\nInstance: " + instToString(inst2) + "\nCluster: " + clust);
-		
-		int[] inst3 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
-		clust = assignCluster(inst3);
-		if(verbose) System.out.println("\nInstance: " + instToString(inst3) + "\nCluster: " + clust);
-		
-		
-		System.out.println("Cluster assignment tests pass! :)\n");
-		return true;
-	}
-	
-	
-	/**
-	 * Tests updateClusters() method
-	 * @param verbose: print extra test info
-	 * @return: returns true if all tests pass (includes manual/printing verification)
-	 */
-	public static boolean testUpdateClusters(boolean verbose){
-		System.out.println("Testing cluster updates...");
-		
-		double var = updateClusters(verbose);
-		System.out.println("Average variance: " + var);
-		
-		int ttlCt = 0;
-		for(HashMap<Integer, Integer> clustCt : clustClass){
-			for(Map.Entry<Integer, Integer> cursor : clustCt.entrySet()){
-				ttlCt += cursor.getValue();
-			}
-		}
-		if(ttlCt != trainData.size()){
-			System.err.println("Instance mismatch between classification (" + ttlCt + ") and original training data (" + trainData.size() + ")");
-			return false;
-		}
-		
-		System.out.println("Cluster update tests pass! :)\n");
-		return true;
-	}
-	
-	/**
-	 * Tests calculateSqErr() method
-	 * @return: returns true if all tests pass
-	 */
-	public static boolean testCalculateSqErr(){
-		System.out.println("Testing squared error calculation...");
-		
-		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
-		int[] inst2 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
-		
-		long sqErr = calculateSqErr(inst1, inst2);
-		if(sqErr != 0){
-			System.err.println("Squared error across two identical instances should be 0: " + sqErr);
-			return false;
-		}
-		
-		int[] inst3 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
-		sqErr = calculateSqErr(inst1, inst3);
-		
-		if(sqErr != 3387){
-			System.err.println("Squared error should be 3387: " + sqErr);
-			return false;
-		}
-		
-		int[] inst4 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
-		sqErr = calculateSqErr(inst1, inst4);
-
-		if(sqErr != 2478){
-			System.err.println("Squared error should be 2478: " + sqErr);
-			return false;
-		}
-		
-		System.out.println("Squared error calculation tests pass! :)\n");
-		return true;
-	}
-	
-	
-	/**
-	 * Tests calculateSSE() method
-	 * @param verbose: print extra test info
-	 * @return: always returns true (manual/printing verification)
-	 */
-	public static boolean testCalculateSSE(boolean verbose){
-		System.out.println("Testing SSE calculation...");
-		
-		long SSE = calculateSSE(verbose);
-		System.out.println("SSE: " + SSE);
-		
-		System.out.println("SSE calculation tests pass! :)\n");
-		return true;
-	}
-	
-	
-	/**
-	 * Tests calculateSSS() method
-	 * @param verbose: if additional testing information should be printed
-	 * @return: always returns true (manual/printing verification)
-	 */
-	public static boolean testCalculateSSS(boolean verbose){
-		System.out.println("Testing SSS calculation...");
-		
-		if(verbose) printClusters();
-		
-		long SSS = calculateSSS(verbose);
-		System.out.println(SSS);
-		
-		System.out.println("SSS calculation tests pass! :)\n");
-		return true;
-	}
-	
-
-	/**
-	 * Tests calculateEntropy() method
-	 * @param verbose: if extra test info should be printed
-	 * @return: always returns true (manual/printing validation)
-	 */
-	public static boolean testCalculateEntropy(boolean verbose){
-		System.out.println("Testing entropy calculation...");
-		
-		double entropy = calculateEntropy(0, verbose);
-		System.out.println("Entropy: " + entropy);
-		
-		System.out.println("Entropy calculation tests pass! :)\n");
-		return true;
-	}
-		
-
-	/**
-	 * Tests calculateMEntropy() method
-	 * @param verbose: if extra test info should be printed
-	 * @return: always returns true (manual/printing verification)
-	 */
-	public static boolean testCalculateMEntropy(boolean verbose){
-		System.out.println("Testing mean entropy calculation...");
-		
-		double mEntropy = calculateMEntropy(verbose);
-		System.out.println("Mean entropy: " + mEntropy);
-		
-		System.out.println("Mean entropy calculation tests pass! :)\n");
-		return true;
-	}
-	
-	//TODO
-	public static boolean testBestIteration(int k){
-		System.out.println("Testing best iteration determination...");
-		
-		System.out.println("Best iteration determination tests pass! :)\n");
-		return true;
 	}
 	
 	/**
@@ -582,14 +477,288 @@ public class Kmeans {
 			return false;
 		}
 		
+		clearData();
 		System.out.println("Data extraction tests pass! :)\n");
+		return true;
+	}
+	
+	/**
+	 * Tests initializeClusters() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testInitializeClusters(String trainFile, int k){
+		System.out.println("Testing cluster initialization...");
+		
+		extractData(trainFile, TRAIN);
+		
+		initializeClusters(k);
+		//test initialization size
+		if(clusters.length != k){
+			System.err.println("Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
+			return false;
+		}
+		
+		//test two random cluster centers for equivalence
+		int rand1 = new Random().nextInt(clusters.length);
+		int rand2;
+		do rand2 = new Random().nextInt(clusters.length);
+		while(rand1 == rand2);
+		
+		boolean equals = true;
+		for(int i = 0; i < clusters[rand1].length; i++){
+			equals = equals && (clusters[rand2][i] == clusters[1][i]);
+			if(!equals) break;
+		}
+		if(equals){
+			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2 + ")");
+			return false;
+		}
+
+		clearData();
+		System.out.println("Cluster initialization tests pass! :)\n");
+		return true;
+	}
+	
+	
+	/**
+	 * Tests assignCluster() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testAssignCluster(String trainFile, int k, boolean verbose){
+		System.out.println("Testing cluster assignment...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		
+		if(verbose) printClusters();
+		
+		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		int clust = assignCluster(inst1);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst1) + "\nCluster: " + clust);
+		
+		int[] inst2 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		clust = assignCluster(inst2);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst2) + "\nCluster: " + clust);
+		
+		int[] inst3 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		clust = assignCluster(inst3);
+		if(verbose) System.out.println("\nInstance: " + instToString(inst3) + "\nCluster: " + clust);
+		
+		clearData();
+		System.out.println("Cluster assignment tests pass! :)\n");
+		return true;
+	}
+	
+	
+	/**
+	 * Tests clusterData() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testClusterData(String trainFile, int k, boolean verbose){
+		System.out.println("Testing clustering data...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		
+		clusterData(verbose);
+		
+		int ttlCt = 0;
+		for(HashMap<Integer, Integer> clustCt : clustClass){
+			for(Map.Entry<Integer, Integer> cursor : clustCt.entrySet()){
+				ttlCt += cursor.getValue();
+			}
+		}
+		if(ttlCt != trainData.size()){
+			System.err.println("Instance mismatch between classification (" + ttlCt + ") and original training data (" + trainData.size() + ")");
+			return false;
+		}
+		
+		clearData();
+		System.out.println("Clustering data tests pass! :)\n");
+		return true;
+	}
+	
+	/**
+	 * Tests updateClusters() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testUpdateClusters(String trainFile, int k, boolean verbose){
+		System.out.println("Testing cluster updates...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+				
+		double var = updateClusters(verbose);
+		System.out.println("Average variance: " + var);
+		
+		clearData();
+		System.out.println("Cluster update tests pass! :)\n");
+		return true;
+	}
+	
+	/**
+	 * Tests calculateSqErr() method
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testCalculateSqErr(){
+		System.out.println("Testing squared error calculation...");
+				
+		int[] inst1 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		int[] inst2 = {0,0,0,2,14,1,0,0,0,0,0,10,12,0,0,0,0,0,8,15,1,2,1,0,0,3,15,5,0,12,7,0,0,10,14,0,6,16,2,0,0,8,16,16,16,12,0,0,0,0,2,4,16,5,0,0,0,0,0,2,13,0,0,0,4};
+		
+		long sqErr = calculateSqErr(inst1, inst2);
+		if(sqErr != 0){
+			System.err.println("Squared error across two identical instances should be 0: " + sqErr);
+			return false;
+		}
+		
+		int[] inst3 = {0,0,1,12,16,14,2,0,0,0,13,11,3,16,5,0,0,4,14,0,0,15,6,0,0,6,12,8,13,16,5,0,0,0,9,12,4,10,8,0,0,0,3,0,0,11,5,0,0,0,16,14,5,15,4,0,0,0,3,12,16,11,1,0,9};
+		sqErr = calculateSqErr(inst1, inst3);
+		
+		if(sqErr != 3387){
+			System.err.println("Squared error should be 3387: " + sqErr);
+			return false;
+		}
+		
+		int[] inst4 = {0,0,3,9,14,9,0,0,0,5,16,14,5,0,0,0,0,12,11,3,0,0,0,0,0,13,16,12,1,0,0,0,0,4,11,13,8,0,0,0,0,0,0,7,11,0,0,0,0,0,1,12,12,0,0,0,0,0,2,15,7,0,0,0,5};
+		sqErr = calculateSqErr(inst1, inst4);
+
+		if(sqErr != 2478){
+			System.err.println("Squared error should be 2478: " + sqErr);
+			return false;
+		}
+		
+		System.out.println("Squared error calculation tests pass! :)\n");
+		return true;
+	}
+	
+	
+	/**
+	 * Tests calculateSSE() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testCalculateSSE(String trainFile, int k, boolean verbose){
+		System.out.println("Testing SSE calculation...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		updateClusters(false);
+		
+		long SSE = calculateSSE(verbose);
+		System.out.println("SSE: " + SSE);
+
+		clearData();
+		System.out.println("SSE calculation tests pass! :)\n");
+		return true;
+	}
+	
+	
+	/**
+	 * Tests calculateSSS() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testCalculateSSS(String trainFile, int k, boolean verbose){
+		System.out.println("Testing SSS calculation...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		
+		if(verbose) printClusters();
+		
+		long SSS = calculateSSS(verbose);
+		System.out.println(SSS);
+
+		clearData();
+		System.out.println("SSS calculation tests pass! :)\n");
+		return true;
+	}
+	
+
+	/**
+	 * Tests calculateEntropy() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing validation)
+	 */
+	public static boolean testCalculateEntropy(String trainFile, int k, boolean verbose){
+		System.out.println("Testing entropy calculation...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		updateClusters(false);
+		
+		double entropy = calculateEntropy(0, verbose);
+		System.out.println("Entropy: " + entropy);
+
+		clearData();
+		System.out.println("Entropy calculation tests pass! :)\n");
+		return true;
+	}
+		
+
+	/**
+	 * Tests calculateMEntropy() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testCalculateMEntropy(String trainFile, int k, boolean verbose){
+		System.out.println("Testing mean entropy calculation...");
+		
+		extractData(trainFile, TRAIN);
+		initializeClusters(k);
+		updateClusters(false);
+		
+		double mEntropy = calculateMEntropy(verbose);
+		System.out.println("Mean entropy: " + mEntropy);
+
+		clearData();
+		System.out.println("Mean entropy calculation tests pass! :)\n");
+		return true;
+	}
+	
+	/**
+	 * Tests bestIteration() method
+	 * @param trainFile: training data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if additional test information should be printed
+	 * @return: always returns true (manual/printing verification)
+	 */
+	public static boolean testBestIteration(String trainFile, int k, boolean verbose){
+		System.out.println("Testing best iteration determination...");
+		
+		extractData(trainFile, TRAIN);
+		bestIteration(k, verbose);
+
+		clearData();
+		System.out.println("Best iteration determination tests pass! :)\n");
 		return true;
 	}
 	
 	//TODO
 	public static boolean testClassifyData(){
 		System.out.println("Testing data classification...");
-		
+
+		clearData();
 		System.out.println("Data classification tests pass! :)\n");
 		return true;
 	}
@@ -604,15 +773,16 @@ public class Kmeans {
 	public static boolean runTests(boolean verbose, String trainFile, String testFile, int k){
 		clearData();
 		if(!testExtractData(trainFile, testFile)) return false;
-		if(!testInitializeClusters(k)) return false;
-		if(!testAssignCluster(verbose)) return false;
-		if(!testUpdateClusters(verbose)) return false;
+		if(!testInitializeClusters(trainFile, k)) return false;
+		if(!testAssignCluster(trainFile, k, verbose)) return false;
+		if(!testClusterData(trainFile, k, false)) return false;
+		if(!testUpdateClusters(trainFile, k, verbose)) return false;
 		if(!testCalculateSqErr()) return false;
-		if(!testCalculateSSE(false)) return false;
-		if(!testCalculateSSS(verbose)) return false;
-		if(!testCalculateEntropy(verbose)) return false;
-		if(!testCalculateMEntropy(verbose)) return false;
-		if(!testBestIteration(k)) return false;
+		if(!testCalculateSSE(trainFile, k, false)) return false;
+		if(!testCalculateSSS(trainFile, k, verbose)) return false;
+		if(!testCalculateEntropy(trainFile, k, verbose)) return false;
+		if(!testCalculateMEntropy(trainFile, k, verbose)) return false;
+		if(!testBestIteration(trainFile, k, verbose)) return false;
 		if(!testClassifyData()) return false;
 		return true;
 	}
