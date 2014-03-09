@@ -446,12 +446,14 @@ public class Kmeans {
 		String trainFile = args[0], testFile = args[1];
 		int k = Integer.parseInt(args[2]);
 		
-		if(!runTests(trainFile, testFile, k, true)) System.exit(0);
+		//if(!runTests(trainFile, testFile, k, true)) System.exit(0);
 		
-		//extractData(trainFile, TRAIN);
-		//bestIteration(k);
-		//extractData(testFile, TEST);
-		//classifyData();
+		extractData(trainFile, TRAIN);
+		System.out.println("Training clusters...");
+		bestIteration(k, false);
+		System.out.println("\nClassifying data...");
+		int[][] conMtrx = classifyData(testFile);
+		printConMtrx(conMtrx);
 	}
 	
 	/**** Printing Methods ****/
@@ -887,9 +889,10 @@ public class Kmeans {
 	
 	/**
 	 * Driver for unit tests
-	 * @param verbose: if tests should print additional information
 	 * @param trainFile: training file to be extracted
 	 * @param testFile: test file to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if tests should print additional information
 	 * @return: returns true if all tests pass
 	 */
 	public static boolean runTests(String trainFile, String testFile, int k, boolean verbose){
