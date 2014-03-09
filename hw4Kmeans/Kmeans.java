@@ -454,6 +454,8 @@ public class Kmeans {
 		System.out.println("\nClassifying data...");
 		int[][] conMtrx = classifyData(testFile);
 		printConMtrx(conMtrx);
+		System.out.println();
+		clusterVisualization();
 	}
 	
 	/**** Printing Methods ****/
@@ -475,7 +477,7 @@ public class Kmeans {
 	 * Prints cluster set
 	 */
 	public static void printClusters(){
-		if(clusters.length == 0){
+		if(clusters == null){
 			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
@@ -483,6 +485,26 @@ public class Kmeans {
 		System.out.println("Clusters:");
 		for(int[] cluster : clusters){
 			System.out.println(instToString(cluster));
+		}
+	}
+	
+	/**
+	 * Prints cluster visualization
+	 */
+	public static void clusterVisualization(){
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
+			System.exit(0);
+		}
+		
+		for(int[] cluster : clusters){
+			System.out.println("\n" + cluster[cluster.length-1]);
+			int size = (int)Math.sqrt(cluster.length);
+			for(int i = 0; i < cluster.length-1; i++){
+				if((i+1) % size == 0) System.out.println();
+				else System.out.print(cluster[i] + "\t");
+			}
+			System.out.println();
 		}
 	}
 	
