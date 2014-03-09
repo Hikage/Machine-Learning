@@ -11,21 +11,31 @@ package hw4Kmeans;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 public class Kmeans {
+	//Training data
+	private static final double trainTtl = 3823.0;	
 	private static ArrayList<int[]> trainData = new ArrayList<int[]>();
-	private static ArrayList<int[]> testData = new ArrayList<int[]>();
 	private static int[][] clusters;
 	private static ArrayList<ArrayList<Integer>> clustMembs = new ArrayList<ArrayList<Integer>>();
 	private static ArrayList<HashMap<Integer, Integer>> clustClass = new ArrayList<HashMap<Integer, Integer>>();
+	
+	//Test data
+	private static int[] testCt = {178, 182, 177, 183, 181, 182, 181, 179, 174, 180};
+	private static final double testTtl = 1797.0;
+	private static ArrayList<int[]> testData = new ArrayList<int[]>();
+	
 	private static final boolean TRAIN = true;
 	private static final boolean TEST = false;
 	
-	
+	private static final DecimalFormat pf = new DecimalFormat("#.##%");
+
+		
 	/**
 	 * Reads input file and generates data set in the form of an array
 	 * @param inputFile: file to be read in
@@ -54,7 +64,7 @@ public class Kmeans {
 			}
 		}
 		catch(IOException ex){
-			System.err.println("Oh no! An error occurred!\n Error: " + ex);
+			System.err.println("ERROR! Oh no! An error occurred!\n Error: " + ex);
 			System.exit(0);
 		}
 	}
@@ -65,7 +75,7 @@ public class Kmeans {
 	 */
 	public static void initializeClusters(int k){
 		if(trainData.isEmpty()){
-			System.err.println("Training data has not yet been extracted");
+			System.err.println("ERROR! Training data has not yet been extracted");
 			System.exit(0);
 		}
 		clusters = new int[k][trainData.get(0).length];
@@ -82,8 +92,8 @@ public class Kmeans {
 	 * @return: returns the index of the closest cluster center
 	 */
 	public static int assignCluster(int[] inst){
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		
@@ -113,11 +123,11 @@ public class Kmeans {
 	 */
 	public static void clusterData(boolean test){
 		if(trainData.isEmpty()){
-			System.err.println("Training data has not yet been extracted");
+			System.err.println("ERROR! Training data has not yet been extracted");
 			System.exit(0);
 		}
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		
@@ -152,11 +162,11 @@ public class Kmeans {
 	 */
 	public static double updateClusters(boolean test){
 		if(trainData.isEmpty()){
-			System.err.println("Training data has not yet been extracted");
+			System.err.println("ERROR! Training data has not yet been extracted");
 			System.exit(0);
 		}
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		
@@ -198,7 +208,7 @@ public class Kmeans {
 	 */
 	public static long calculateSqErr(int[] inst1, int[] inst2){
 		if(inst1.length != inst2.length){
-			System.err.println("Two instances must be of the same size: " + inst1.length + " vs. " + inst2.length);
+			System.err.println("ERROR! Two instances must be of the same size: " + inst1.length + " vs. " + inst2.length);
 			System.exit(0);
 		}
 		
@@ -219,15 +229,15 @@ public class Kmeans {
 	 */
 	public static long calculateSSE(boolean test){
 		if(trainData.isEmpty()){
-			System.err.println("Training data has not yet been extracted");
+			System.err.println("ERROR! Training data has not yet been extracted");
 			System.exit(0);
 		}
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		if(clustMembs.isEmpty()){
-			System.err.println("Training data has not yet been classified");
+			System.err.println("ERROR! Training data has not yet been classified");
 			System.exit(0);
 		}
 		
@@ -251,8 +261,8 @@ public class Kmeans {
 	 * @return: returns the sum-squared separation value
 	 */
 	public static long calculateSSS(boolean test){
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+		if(clusters == null){
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		
@@ -278,7 +288,7 @@ public class Kmeans {
 	 */
 	public static double calculateEntropy(int clust, boolean test){
 		if(clustClass.isEmpty()){
-			System.err.println("Cluster classifications have not yet been counted");
+			System.err.println("ERROR! Cluster classifications have not yet been counted");
 			System.exit(0);
 		}
 		
@@ -290,11 +300,24 @@ public class Kmeans {
 			ttlCt += cursor.getValue();
 		}
 		
+		int domClass = 0;
+		int domClassCt = 0;
 		for(Map.Entry<Integer, Integer> cursor : clsifCt.entrySet()){
+			//while we're iterating, figure out and save the dominant class for each cluster
+			if(cursor.getValue() >= domClassCt){
+				if(cursor.getValue() == domClassCt && new Random().nextBoolean());		//if we find two equivalent, randomly choose between doing nothing and updating
+				else{
+					domClassCt = cursor.getValue();
+					domClass = cursor.getKey();
+				}
+			}
+			
 			double prob = cursor.getValue()/ttlCt;
 			entropy += prob * (Math.log(prob)/Math.log(2));
-			if(test) System.out.println("Class count: " + cursor.getValue() + "; total: " + ttlCt + "; prob: " + prob + "; entropy: " + entropy);
+			if(test) System.out.println("Class " + cursor.getKey() + " count: " + cursor.getValue() + "; total: " + ttlCt + "; prob: " + prob + "; entropy: " + entropy);
 		}
+		clusters[clust][clusters[clust].length-1] = domClass;
+		if(test) System.out.println("Dominant class for cluster " + clust + ": " + domClass);
 		
 		return entropy * -1;
 	}
@@ -307,26 +330,25 @@ public class Kmeans {
 	 */
 	public static double calculateMEntropy(boolean test){
 		if(trainData.isEmpty()){
-			System.err.println("Training data has not yet been extracted");
+			System.err.println("ERROR! Training data has not yet been extracted");
 			System.exit(0);
 		}
 		if(clustMembs.isEmpty()){
-			System.err.println("Training data has not yet been classified");
+			System.err.println("ERROR! Training data has not yet been classified");
 			System.exit(0);
 		}
 		if(clustClass.isEmpty()){
-			System.err.println("Cluster classifications have not yet been counted");
+			System.err.println("ERROR! Cluster classifications have not yet been counted");
 			System.exit(0);
 		}
 		
 		double mEntropy = 0.0;
-		double ttlInst = trainData.size();
 		
 		for(int i = 0; i < clustClass.size(); i++){
 			int instInClust = clustMembs.get(i).size();
 			double entropy = calculateEntropy(i, false);
-			mEntropy += (instInClust/ttlInst * entropy);
-			if(test) System.out.println("+" + instInClust + "/" + ttlInst + "*" + entropy + " = " + mEntropy);
+			mEntropy += (instInClust/trainTtl * entropy);
+			if(test) System.out.println("+" + instInClust + "/" + trainTtl + "*" + entropy + " = " + mEntropy);
 		}
 		
 		return mEntropy;
@@ -338,17 +360,12 @@ public class Kmeans {
 	 * @param test: if the method is being tested
 	 */
 	public static void bestIteration(int k, boolean test){
-		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
-			System.exit(0);
-		}
-		
 		int itCap = 10000;									//set an iteration cap to prevent infinite looping
 		double thresh = 0.01;								//threshold for cluster movement convergence
 		int numIterations = 5;								//number of iterations to run
 		
 		double SSE = Double.POSITIVE_INFINITY;
-		int[][] bestClusts = clusters.clone();
+		int[][] bestClusts = new int[k][trainData.get(0).length];
 		
 		for(int i = 0; i < numIterations; i++){
 			initializeClusters(k);
@@ -371,9 +388,50 @@ public class Kmeans {
 		System.out.println("SSE: " + SSE + "; SSS: " + SSS + "; Mean Entropy: " + mEntropy);
 	}
 	
-	//TODO
-	public static void classifyData(){
-		//calculate accuracy and confusion matrix
+	/**
+	 * Classifies each test instance, building the confusion matrix along the way
+	 * @param testFile: test data to be extracted
+	 * @return: returns the completed confusion matrix
+	 */
+	public static int[][] classifyData(String testFile){
+		extractData(testFile, TEST);
+		
+		int[][] conMtrx = new int[testCt.length][testCt.length];
+		
+		//iterate through each instance of the data and classify
+		for(int[] inst : testData){
+			int clust = assignCluster(inst);
+			int clsif = clusters[clust][clusters[clust].length-1];
+			int trueclsif = inst[inst.length-1];
+			
+			if(clsif < 0){
+				System.err.println("ERROR! Error finding maximum probability for classification");
+				System.exit(0);
+			}
+			
+			conMtrx[trueclsif][clsif]++;			//build confusion matrix
+		}
+		
+		return conMtrx;
+	}
+	
+	/**
+	 * Calculates overall accuracy of test data
+	 * @param conMtrx: confusion matrix used to calculate accuracy
+	 * @return: returns overall accuracy of test data
+	 */
+	public static double calcAcc(int[][] conMtrx){
+		if(conMtrx == null){
+			System.err.println("ERROR! Confusion matrix has not yet been constructed");
+			System.exit(0);
+		}
+		
+		int correct = 0;
+		for(int i = 0; i < conMtrx.length; i++){
+			correct += conMtrx[i][i];
+		}
+		
+		return correct/testTtl;
 	}
 	
 	/**
@@ -388,7 +446,7 @@ public class Kmeans {
 		String trainFile = args[0], testFile = args[1];
 		int k = Integer.parseInt(args[2]);
 		
-		if(!runTests(true, trainFile, testFile, k)) System.exit(0);
+		if(!runTests(trainFile, testFile, k, true)) System.exit(0);
 		
 		//extractData(trainFile, TRAIN);
 		//bestIteration(k);
@@ -398,6 +456,11 @@ public class Kmeans {
 	
 	/**** Printing Methods ****/
 	
+	/**
+	 * Converts specified instance to string representation
+	 * @param inst: instance to be converted
+	 * @return: returns string representation of the indicated instance
+	 */
 	public static String instToString(int[] inst){
 		String instance = "";
 		for(int feature : inst){
@@ -411,13 +474,42 @@ public class Kmeans {
 	 */
 	public static void printClusters(){
 		if(clusters.length == 0){
-			System.err.println("Clusters have not yet been initiated");
+			System.err.println("ERROR! Clusters have not yet been initiated");
 			System.exit(0);
 		}
 		
 		System.out.println("Clusters:");
 		for(int[] cluster : clusters){
 			System.out.println(instToString(cluster));
+		}
+	}
+	
+	/**
+	 * Converts the confusion matrix into a string representation
+	 * @param digitConMtrx: confusion matrix for a specific digit, to be converted
+	 * @return: returns the string representation of the indicated confusion matrix
+	 */
+	public static String digitConMtrxToString(int[] digitConMtrx){
+		String mtrxStr = "";
+		for(int i = 0; i < digitConMtrx.length; i++){
+			mtrxStr += (digitConMtrx[i] + "\t");
+		}
+		return mtrxStr;
+	}
+	
+	/**
+	 * Prints the confusion matrix for all digits and overall accuracy
+	 * @param conMtrx: confusion matrix to be printed
+	 */
+	public static void printConMtrx(int[][] conMtrx){
+		System.out.println((int)testTtl + " total instances");
+		System.out.println("Accuracy: " + pf.format(calcAcc(conMtrx)));
+		for(int i = 0; i < conMtrx.length; i++){
+			System.out.print("\t" + i);
+		}
+		System.out.println();
+		for(int i = 0; i < conMtrx.length; i++){
+			System.out.println(i + "\t" + digitConMtrxToString(conMtrx[i]));
 		}
 	}
 	
@@ -446,34 +538,34 @@ public class Kmeans {
 		//test training data
 		extractData(trainFile, TRAIN);
 		if(trainData.size() != 3823){
-			System.err.println("Wrong number of training instances read in: " + trainData.size());
+			System.err.println("ERROR! Wrong number of training instances read in: " + trainData.size());
 			return false;
 		}
 		for(int i = 0; i < trainData.size(); i++){
 			if(trainData.get(i)[0] != 0){
-				System.err.println("First value for training instance " + i + "should be 0: " + trainData.get(i)[0]);
+				System.err.println("ERROR! First value for training instance " + i + "should be 0: " + trainData.get(i)[0]);
 				return false;
 			}
 		}
 		if(trainData.get(27)[33] != 2){		//random instance
-			System.err.println("Value for training instance 27 feature 33 should be 2: " + trainData.get(27)[33]);
+			System.err.println("ERROR! Value for training instance 27 feature 33 should be 2: " + trainData.get(27)[33]);
 			return false;
 		}
 		
 		//test test data
 		extractData(testFile, TEST);
 		if(testData.size() != 1797){
-			System.err.println("Wrong number of test instances read in: " + testData.size());
+			System.err.println("ERROR! Wrong number of test instances read in: " + testData.size());
 			return false;
 		}
 		for(int i = 0; i < testData.size(); i++){
 			if(testData.get(i)[0] != 0){
-				System.err.println("First value for test instance " + i + "should be 0: " + testData.get(i)[0]);
+				System.err.println("ERROR! First value for test instance " + i + "should be 0: " + testData.get(i)[0]);
 				return false;
 			}
 		}
 		if(testData.get(1385)[53] != 16){		//random instance
-			System.err.println("Value for test instance 1385 feature 53 should be 16: " + testData.get(1385)[53]);
+			System.err.println("ERROR! Value for test instance 1385 feature 53 should be 16: " + testData.get(1385)[53]);
 			return false;
 		}
 		
@@ -496,7 +588,7 @@ public class Kmeans {
 		initializeClusters(k);
 		//test initialization size
 		if(clusters.length != k){
-			System.err.println("Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
+			System.err.println("ERROR! Clusters initialized to the wrong size: " + k + " (k) " + clusters.length + " (# clusters)");
 			return false;
 		}
 		
@@ -512,7 +604,7 @@ public class Kmeans {
 			if(!equals) break;
 		}
 		if(equals){
-			System.err.println("Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2 + ")");
+			System.err.println("ERROR! Two cluster centers should not be equivalent! (clusters " + rand1 + " and " + rand2 + ")");
 			return false;
 		}
 
@@ -577,7 +669,7 @@ public class Kmeans {
 			}
 		}
 		if(ttlCt != trainData.size()){
-			System.err.println("Instance mismatch between classification (" + ttlCt + ") and original training data (" + trainData.size() + ")");
+			System.err.println("ERROR! Instance mismatch between classification (" + ttlCt + ") and original training data (" + trainData.size() + ")");
 			return false;
 		}
 		
@@ -619,7 +711,7 @@ public class Kmeans {
 		
 		long sqErr = calculateSqErr(inst1, inst2);
 		if(sqErr != 0){
-			System.err.println("Squared error across two identical instances should be 0: " + sqErr);
+			System.err.println("ERROR! Squared error across two identical instances should be 0: " + sqErr);
 			return false;
 		}
 		
@@ -627,7 +719,7 @@ public class Kmeans {
 		sqErr = calculateSqErr(inst1, inst3);
 		
 		if(sqErr != 3387){
-			System.err.println("Squared error should be 3387: " + sqErr);
+			System.err.println("ERROR! Squared error should be 3387: " + sqErr);
 			return false;
 		}
 		
@@ -635,7 +727,7 @@ public class Kmeans {
 		sqErr = calculateSqErr(inst1, inst4);
 
 		if(sqErr != 2478){
-			System.err.println("Squared error should be 2478: " + sqErr);
+			System.err.println("ERROR! Squared error should be 2478: " + sqErr);
 			return false;
 		}
 		
@@ -754,10 +846,40 @@ public class Kmeans {
 		return true;
 	}
 	
-	//TODO
-	public static boolean testClassifyData(){
+	/**
+	 * Tests classifyData() method
+	 * @param trainFile: training data to be extracted
+	 * @param testFile: test data to be extracted
+	 * @param k: number of clusters
+	 * @param verbose: if extra test information should be printed
+	 * @return: returns true if all tests pass
+	 */
+	public static boolean testClassifyData(String trainFile, String testFile, int k, boolean verbose){
 		System.out.println("Testing data classification...");
 
+		extractData(trainFile, TRAIN);
+		bestIteration(k, false);
+		
+		int[][] conMtrx = classifyData(testFile);
+		if(verbose){
+			printClusters();
+			printConMtrx(conMtrx);
+		}
+		
+		for(int i = 0; i < conMtrx.length; i++){
+			if(conMtrx[i][i] == testCt[i]){
+				System.err.println("ERROR! Perfect accuracy very unlikely for " + i + ": " + conMtrx[i][i]);
+				return false;
+			}
+			int isum = 0;
+			for(int j = 0; j < conMtrx[i].length; j++) isum += conMtrx[i][j];
+			if(isum != testCt[i]){
+				System.err.println("ERROR! Confusion matrix for digit " + i + " should sum to total instance count (" + testCt[i] + "): " +
+						digitConMtrxToString(conMtrx[i]));
+				return false;
+			}
+		}		
+		
 		clearData();
 		System.out.println("Data classification tests pass! :)\n");
 		return true;
@@ -770,7 +892,7 @@ public class Kmeans {
 	 * @param testFile: test file to be extracted
 	 * @return: returns true if all tests pass
 	 */
-	public static boolean runTests(boolean verbose, String trainFile, String testFile, int k){
+	public static boolean runTests(String trainFile, String testFile, int k, boolean verbose){
 		clearData();
 		if(!testExtractData(trainFile, testFile)) return false;
 		if(!testInitializeClusters(trainFile, k)) return false;
@@ -783,7 +905,7 @@ public class Kmeans {
 		if(!testCalculateEntropy(trainFile, k, verbose)) return false;
 		if(!testCalculateMEntropy(trainFile, k, verbose)) return false;
 		if(!testBestIteration(trainFile, k, verbose)) return false;
-		if(!testClassifyData()) return false;
+		if(!testClassifyData(trainFile, testFile, k, verbose)) return false;
 		return true;
 	}
 
