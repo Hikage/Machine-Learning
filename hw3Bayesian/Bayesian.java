@@ -272,8 +272,7 @@ public class Bayesian {
 		trainData.clear();
 		testData.clear();
 	}
-	
-	
+		
 	/**
 	 * Tests the calcProbs() method
 	 * @return: returns true if all tests pass
@@ -308,8 +307,7 @@ public class Bayesian {
 		System.out.println("Probability calculation tests pass! :)\n");
 		return true;
 	}
-	
-	
+		
 	/**
 	 * Tests the calcCondProbs() method
 	 * @param bin: whether data should be binned
@@ -352,9 +350,7 @@ public class Bayesian {
 		System.out.println("Conditional probability calculation tests pass! :)\n");
 		return true;
 	}
-	
-	
-	
+		
 	/**
 	 * Tests the classifyInst() method
 	 * @param bin: whether data should be binned
@@ -415,8 +411,7 @@ public class Bayesian {
 		System.out.println("Instance classification tests pass! :)\n");
 		return true;
 	}
-	
-	
+		
 	/**
 	 * Tests the naiveBayesClass() method
 	 * @param testFile: file to be extracted
